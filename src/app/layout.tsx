@@ -14,15 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MR Capitals",
-  description: "Home",
+  title: "MR CAPITALS",
+  description: "MR Capitals - Trading simple e inteligente",
   icons: {
-    icon: [
-      { url: "/mrcap-light.png", type: "image/png" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
-    shortcut: "/mrcap-light.png",
-    apple: "/mrcap-light.png",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
   },
 };
 

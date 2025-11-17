@@ -170,7 +170,7 @@ export default function Home() {
           <Link href="/" className="flex items-center">
             <Image
               src="/mrcap-light-narrow.png"
-              alt="MR Capitals"
+              alt="MR CAPITALS"
               width={180}
               height={60}
               className="h-auto w-auto"

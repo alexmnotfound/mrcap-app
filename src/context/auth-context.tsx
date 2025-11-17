@@ -11,6 +11,12 @@ import {
 } from "react";
 import type { AccountSummary, AppUser } from "@/types/api";
 import { apiFetch, getDefaultApiBase } from "@/lib/api";
+import { auth, googleAuthProvider } from "@/lib/firebase";
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+} from "firebase/auth";
 
 type AuthContextValue = {
   token: string | null;
@@ -20,6 +26,8 @@ type AuthContextValue = {
   loading: boolean;
   error: string | null;
   login: (input: { token?: string; apiBase?: string }) => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   refreshAccounts: () => Promise<void>;
 };
@@ -120,6 +128,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [apiBase]);
 
+  const loginWithEmail = useCallback(async (email: string, password: string) => {
+    if (typeof window === "undefined" || !auth) {
+      throw new Error("Firebase not initialized");
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
+      await login({ token: idToken });
+    } catch (err: any) {
+      let errorMessage = "Login failed";
+      if (err.code === "auth/user-not-found") {
+        errorMessage = "Usuario no encontrado";
+      } else if (err.code === "auth/wrong-password") {
+        errorMessage = "Contraseña incorrecta";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Email inválido";
+      } else if (err.code === "auth/user-disabled") {
+        errorMessage = "Usuario deshabilitado";
+      } else if (err.code === "auth/too-many-requests") {
+        errorMessage = "Demasiados intentos. Por favor intentá más tarde";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [login]);
+
+  const loginWithGoogle = useCallback(async () => {
+    if (typeof window === "undefined" || !auth) {
+      throw new Error("Firebase not initialized");
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await signInWithPopup(auth, googleAuthProvider);
+      const idToken = await result.user.getIdToken();
+      await login({ token: idToken });
+    } catch (err: any) {
+      let errorMessage = "Login con Google falló";
+      if (err.code === "auth/popup-closed-by-user") {
+        errorMessage = "El popup fue cerrado. Por favor intentá de nuevo";
+      } else if (err.code === "auth/cancelled-popup-request") {
+        errorMessage = "Login cancelado";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [login]);
+
   const refreshAccounts = useCallback(async () => {
     try {
       const data = await apiFetch<AccountSummary[]>("/api/accounts/me", {
@@ -132,7 +198,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [apiBase, token]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    if (typeof window !== "undefined" && auth) {
+      try {
+        await firebaseSignOut(auth);
+      } catch (err) {
+        console.error("Firebase logout error:", err);
+      }
+    }
     setToken(null);
     setProfile(null);
     setAccounts([]);
@@ -149,10 +222,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       login,
+      loginWithEmail,
+      loginWithGoogle,
       logout,
       refreshAccounts,
     }),
-    [token, apiBase, profile, accounts, loading, error, login, logout, refreshAccounts]
+    [token, apiBase, profile, accounts, loading, error, login, loginWithEmail, loginWithGoogle, logout, refreshAccounts]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
