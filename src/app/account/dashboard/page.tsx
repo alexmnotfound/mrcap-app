@@ -134,7 +134,7 @@ export default function DashboardPage() {
       <DashboardLayout>
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-slate-600">
-            {loading ? "Loading your workspace..." : "Redirecting to login..."}
+            {loading ? "Cargando tu espacio de trabajo..." : "Redirigiendo al inicio de sesión..."}
           </p>
         </div>
       </DashboardLayout>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
           {/* Page Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-semibold text-slate-900">Dashboard</h1>
-            <p className="mt-2 text-slate-600">Welcome back, {profile.full_name}</p>
+            <p className="mt-2 text-slate-600">Bienvenido de nuevo, {profile.full_name}</p>
           </div>
 
           {error && (
@@ -161,32 +161,32 @@ export default function DashboardPage() {
           <section className="mb-8 grid gap-6 lg:grid-cols-3">
             <div className="card p-6">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Accounts
+                Cuentas
               </p>
               <p className="mt-3 text-4xl font-semibold text-slate-900">{accounts.length}</p>
               <p className="mt-1 text-sm text-slate-600">
-                Active vehicles in your name
+                Vehículos activos a tu nombre
               </p>
             </div>
             <div className="card p-6">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Hedge funds
+                Fondos de inversión
               </p>
               <p className="mt-3 text-4xl font-semibold text-slate-900">
                 {hedgeFunds.length || "—"}
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Current fund exposures
+                Exposiciones actuales a fondos
               </p>
             </div>
             <div className="card p-6">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Status
+                Estado
               </p>
               <p className="mt-3 text-4xl font-semibold capitalize text-slate-900">
                 {profile.status}
               </p>
-              <p className="mt-1 text-sm text-slate-600">Profile health</p>
+              <p className="mt-1 text-sm text-slate-600">Salud del perfil</p>
             </div>
           </section>
 
@@ -194,9 +194,9 @@ export default function DashboardPage() {
           <section className="mb-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div className="card p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold text-slate-900">Movements</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Movimientos</h2>
                 {movementsLoading && (
-                  <span className="text-sm text-slate-500">Refreshing…</span>
+                  <span className="text-sm text-slate-500">Actualizando…</span>
                 )}
               </div>
               {accounts.map((account) => (
@@ -204,24 +204,24 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                        Account {account.account_number}
+                        Cuenta {account.account_number}
                       </p>
                       <p className="mt-1 text-lg font-semibold text-slate-900">
-                        Net invested {currency.format(Number(account.net_invested))}
+                        Inversión neta {currency.format(Number(account.net_invested))}
                       </p>
                     </div>
                     <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-                      Cash + Fund Share
+                      Efectivo + Participaciones
                     </div>
                   </div>
                   <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
                     <table className="min-w-full text-sm">
                       <thead className="bg-slate-50 text-left text-slate-600">
                         <tr>
-                          <th className="px-4 py-3 font-medium">Date</th>
-                          <th className="px-4 py-3 font-medium">Type</th>
-                          <th className="px-4 py-3 font-medium">Amount / Shares</th>
-                          <th className="px-4 py-3 font-medium">Details</th>
+                          <th className="px-4 py-3 font-medium">Fecha</th>
+                          <th className="px-4 py-3 font-medium">Tipo</th>
+                          <th className="px-4 py-3 font-medium">Monto / Participaciones</th>
+                          <th className="px-4 py-3 font-medium">Detalles</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -249,36 +249,36 @@ export default function DashboardPage() {
                             </td>
                             <td className="px-4 py-3 text-xs text-slate-500">
                               {movement.type === "fund_share"
-                                ? `Fund: ${movement.fund_name ?? "N/A"}`
+                                ? `Fondo: ${movement.fund_name ?? "N/A"}`
                                 : movement.currency}
-                            </td>
-                          </tr>
-                        ))}
-                        {movements[account.account_id]?.length === 0 && (
-                          <tr>
-                            <td
-                              colSpan={4}
-                              className="px-4 py-6 text-center text-slate-500"
-                            >
-                              No movements recorded yet.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {movements[account.account_id]?.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            className="px-4 py-6 text-center text-slate-500"
+                          >
+                            Aún no hay movimientos registrados.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
-              {accounts.length === 0 && (
-                <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
-                  No accounts assigned yet.
-                </div>
-              )}
+              </div>
+            ))}
+            {accounts.length === 0 && (
+              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
+                Aún no se han asignado cuentas.
+              </div>
+            )}
             </div>
 
             <div className="space-y-6">
               <div className="card p-6">
-                <h2 className="text-2xl font-semibold text-slate-900">Profile</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">Perfil</h2>
                 <div className="mt-4 space-y-4">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Firebase UID</p>
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Created</p>
+                    <p className="text-sm font-medium text-slate-600">Creado</p>
                     <p className="mt-1 text-slate-900">
                       {dateFormat.format(new Date(profile.created_at))}
                     </p>
@@ -299,13 +299,13 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3">
                   <Activity className="h-5 w-5 text-blue-600" />
                   <p className="text-sm font-medium uppercase tracking-wider text-blue-700">
-                    Hedge fund exposure
+                    Exposición a fondos
                   </p>
                 </div>
                 <div className="mt-4 space-y-3">
                   {hedgeFunds.length === 0 && (
                     <p className="text-sm text-blue-700/70">
-                      No fund positions yet.
+                      Aún no hay posiciones en fondos.
                     </p>
                   )}
                   {hedgeFunds.map((position) => (
@@ -317,7 +317,7 @@ export default function DashboardPage() {
                         {position.accountNumber} · {position.fund_name}
                       </p>
                       <p className="mt-1 text-lg font-semibold text-blue-900">
-                        {position.total_shares} shares
+                        {position.total_shares} participaciones
                       </p>
                       {position.latest_nav_per_share && (
                         <p className="mt-1 text-xs text-blue-700/70">
@@ -338,13 +338,13 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                    Admin view
+                    Vista de administrador
                   </p>
-                  <h2 className="mt-1 text-3xl font-semibold text-slate-900">Firmwide overview</h2>
+                  <h2 className="mt-1 text-3xl font-semibold text-slate-900">Vista general de la firma</h2>
                 </div>
                 {adminLoading && (
                   <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-1 text-xs font-medium text-slate-600">
-                    Loading…
+                    Cargando…
                   </span>
                 )}
               </div>
@@ -352,17 +352,17 @@ export default function DashboardPage() {
               <div className="card p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <BarChart3 className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-xl font-semibold text-slate-900">Account summaries</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">Resúmenes de cuentas</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead className="bg-slate-50 text-left text-slate-600">
                       <tr>
-                        <th className="px-4 py-3 font-medium">Investor</th>
-                        <th className="px-4 py-3 font-medium">Account</th>
-                        <th className="px-4 py-3 font-medium">Net invested</th>
-                        <th className="px-4 py-3 font-medium">Deposits</th>
-                        <th className="px-4 py-3 font-medium">Fees</th>
+                        <th className="px-4 py-3 font-medium">Inversor</th>
+                        <th className="px-4 py-3 font-medium">Cuenta</th>
+                        <th className="px-4 py-3 font-medium">Inversión neta</th>
+                        <th className="px-4 py-3 font-medium">Depósitos</th>
+                        <th className="px-4 py-3 font-medium">Comisiones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -395,7 +395,7 @@ export default function DashboardPage() {
                             colSpan={5}
                             className="px-4 py-6 text-center text-slate-500"
                           >
-                            No accounts yet.
+                            Aún no hay cuentas.
                           </td>
                         </tr>
                       )}
@@ -407,17 +407,17 @@ export default function DashboardPage() {
               <div className="card p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <ArrowRight className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-xl font-semibold text-slate-900">Global movements</h3>
+                  <h3 className="text-xl font-semibold text-slate-900">Movimientos globales</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead className="bg-slate-50 text-left text-slate-600">
                       <tr>
-                        <th className="px-4 py-3 font-medium">Investor</th>
-                        <th className="px-4 py-3 font-medium">Account</th>
-                        <th className="px-4 py-3 font-medium">Date</th>
-                        <th className="px-4 py-3 font-medium">Cash</th>
-                        <th className="px-4 py-3 font-medium">Fund shares</th>
+                        <th className="px-4 py-3 font-medium">Inversor</th>
+                        <th className="px-4 py-3 font-medium">Cuenta</th>
+                        <th className="px-4 py-3 font-medium">Fecha</th>
+                        <th className="px-4 py-3 font-medium">Efectivo</th>
+                        <th className="px-4 py-3 font-medium">Participaciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -448,7 +448,7 @@ export default function DashboardPage() {
                             colSpan={5}
                             className="px-4 py-6 text-center text-slate-500"
                           >
-                            No movements yet.
+                            Aún no hay movimientos.
                           </td>
                         </tr>
                       )}

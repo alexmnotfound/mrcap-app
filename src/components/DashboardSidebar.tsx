@@ -30,30 +30,30 @@ interface NavSection {
 
 const baseNavSections: NavSection[] = [
   {
-    title: "Manage",
+    title: "Gestión",
     items: [
       {
-        label: "My Dashboard",
+        label: "Mi Dashboard",
         href: "/account/dashboard",
         icon: LayoutDashboard,
       },
     ],
   },
   {
-    title: "Funds",
+    title: "Fondos",
     items: [
       {
-        label: "Funds",
+        label: "Fondos",
         href: "/account/funds",
         icon: TrendingUp,
       },
     ],
   },
   {
-    title: "Settings",
+    title: "Configuración",
     items: [
       {
-        label: "Configuration",
+        label: "Configuración",
         href: "/account/configuration",
         icon: Settings,
       },
@@ -133,7 +133,7 @@ export default function DashboardSidebar({
     return {
       ...section,
       items: section.items.map((item) => {
-        if (item.label === "Funds") {
+        if (item.label === "Fondos") {
           return {
             ...item,
             children: funds.map((fund) => ({
@@ -173,7 +173,7 @@ export default function DashboardSidebar({
           <button
             onClick={onToggleCollapse}
             className="flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
           >
             <ChevronLeft
               className={`h-4 w-4 transition-transform ${
@@ -275,7 +275,7 @@ export default function DashboardSidebar({
           <div className="border-t border-slate-200 p-4">
             <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2">
               <p className="text-xs font-medium text-slate-900">
-                {profile?.full_name || "User"}
+                {profile?.full_name || "Usuario"}
               </p>
               <p className="text-xs text-slate-600 truncate">
                 {profile?.email || ""}
@@ -291,7 +291,7 @@ export default function DashboardSidebar({
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               <LogOut className="h-5 w-5" />
-              <span>Logout</span>
+              <span>Cerrar sesión</span>
             </button>
           </div>
         )}
@@ -300,7 +300,7 @@ export default function DashboardSidebar({
             <button
               onClick={handleLogout}
               className="flex w-full items-center justify-center rounded-lg p-2 text-slate-700 transition-colors hover:bg-slate-50"
-              title="Logout"
+              title="Cerrar sesión"
             >
               <LogOut className="h-5 w-5" />
             </button>

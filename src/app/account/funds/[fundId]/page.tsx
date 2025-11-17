@@ -64,7 +64,7 @@ export default function FundDetailPage() {
           setError(
             err instanceof Error
               ? err.message
-              : "Failed to load fund performance"
+              : "Error al cargar el rendimiento del fondo"
           );
         }
       } finally {
@@ -84,7 +84,7 @@ export default function FundDetailPage() {
       <DashboardLayout>
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-slate-600">
-            {loading ? "Loading..." : "Redirecting to login..."}
+            {loading ? "Cargando..." : "Redirigiendo al inicio de sesión..."}
           </p>
         </div>
       </DashboardLayout>
@@ -97,12 +97,12 @@ export default function FundDetailPage() {
         <div className="p-8">
           <div className="mx-auto max-w-7xl">
             <div className="card p-12 text-center">
-              <p className="text-slate-600">Invalid fund ID</p>
+              <p className="text-slate-600">ID de fondo inválido</p>
               <Link
                 href="/account/funds"
                 className="mt-4 inline-block text-blue-600 hover:text-blue-700"
               >
-                Back to Funds
+                Volver a Fondos
               </Link>
             </div>
           </div>
@@ -136,10 +136,10 @@ export default function FundDetailPage() {
               className="mb-4 inline-flex items-center gap-2 text-sm text-slate-600 transition hover:text-slate-900"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Funds
+              Volver a Fondos
             </Link>
             <h1 className="text-3xl font-semibold text-slate-900">
-              {performance?.fund_name || "Fund"}
+              {performance?.fund_name || "Fondo"}
             </h1>
             {performance && (
               <div className="mt-2 flex items-center gap-4 text-slate-600">
@@ -159,11 +159,11 @@ export default function FundDetailPage() {
 
           {performanceLoading ? (
             <div className="card p-12 text-center">
-              <p className="text-slate-600">Loading fund performance...</p>
+              <p className="text-slate-600">Cargando rendimiento del fondo...</p>
             </div>
           ) : !performance ? (
             <div className="card p-12 text-center">
-              <p className="text-slate-600">Fund not found</p>
+              <p className="text-slate-600">Fondo no encontrado</p>
             </div>
           ) : (
             <>
@@ -171,7 +171,7 @@ export default function FundDetailPage() {
               <div className="mb-8 grid gap-6 md:grid-cols-3">
                 <div className="card p-6">
                   <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                    Latest NAV
+                    Último NAV
                   </p>
                   <p className="mt-3 text-4xl font-semibold text-slate-900">
                     {latestNav
@@ -192,19 +192,19 @@ export default function FundDetailPage() {
 
                 <div className="card p-6">
                   <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                    NAV Points
+                    Puntos NAV
                   </p>
                   <p className="mt-3 text-4xl font-semibold text-slate-900">
                     {navData.length}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    Historical data points
+                    Puntos de datos históricos
                   </p>
                 </div>
 
                 <div className="card p-6">
                   <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                    Latest AUM
+                    Último AUM
                   </p>
                   <p className="mt-3 text-4xl font-semibold text-slate-900">
                     {hasNavData && navData[navData.length - 1]?.total_aum
@@ -213,7 +213,7 @@ export default function FundDetailPage() {
                   </p>
                   {hasNavData && navData[navData.length - 1]?.as_of_date && (
                     <p className="mt-1 text-sm text-slate-600">
-                      As of{" "}
+                      Al{" "}
                       {dateFormat.format(
                         new Date(navData[navData.length - 1].as_of_date)
                       )}
@@ -228,16 +228,16 @@ export default function FundDetailPage() {
                   <div className="mb-4 flex items-center gap-3">
                     <BarChart3 className="h-5 w-5 text-blue-600" />
                     <h2 className="text-xl font-semibold text-slate-900">
-                      NAV History
+                      Historial de NAV
                     </h2>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-sm">
                       <thead className="bg-slate-50 text-left text-slate-600">
                         <tr>
-                          <th className="px-4 py-3 font-medium">Date</th>
-                          <th className="px-4 py-3 font-medium">NAV per Share</th>
-                          <th className="px-4 py-3 font-medium">Total AUM</th>
+                          <th className="px-4 py-3 font-medium">Fecha</th>
+                          <th className="px-4 py-3 font-medium">NAV por Participación</th>
+                          <th className="px-4 py-3 font-medium">AUM Total</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -294,10 +294,10 @@ export default function FundDetailPage() {
                 <div className="card p-12 text-center">
                   <TrendingUp className="mx-auto h-12 w-12 text-slate-400" />
                   <h2 className="mt-4 text-xl font-semibold text-slate-900">
-                    No Performance Data
+                    Sin datos de rendimiento
                   </h2>
                   <p className="mt-2 text-slate-600">
-                    No NAV data available for this fund yet.
+                    Aún no hay datos de NAV disponibles para este fondo.
                   </p>
                 </div>
               )}

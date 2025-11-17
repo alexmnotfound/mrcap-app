@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccounts(myAccounts);
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Unable to load profile");
+      setError(err instanceof Error ? err.message : "No se pudo cargar el perfil");
       persistState(null);
       setToken(null);
       setProfile(null);
@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccounts(myAccounts);
       persistState({ token: nextToken ?? null, apiBase: base });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
       throw err;
     } finally {
       setLoading(false);
@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const idToken = await userCredential.user.getIdToken();
       await login({ token: idToken });
     } catch (err: any) {
-      let errorMessage = "Login failed";
+      let errorMessage = "Error al iniciar sesión";
       if (err.code === "auth/user-not-found") {
         errorMessage = "Usuario no encontrado";
       } else if (err.code === "auth/wrong-password") {
@@ -358,7 +358,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setAccounts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to refresh accounts");
+      setError(err instanceof Error ? err.message : "No se pudieron actualizar las cuentas");
     }
   }, [apiBase, token]);
 

@@ -39,7 +39,7 @@ export default function FundsPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setFundsError(err instanceof Error ? err.message : "Failed to load funds");
+          setFundsError(err instanceof Error ? err.message : "Error al cargar los fondos");
         }
       } finally {
         if (!cancelled) {
@@ -58,7 +58,7 @@ export default function FundsPage() {
       <DashboardLayout>
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-slate-600">
-            {loading ? "Loading..." : "Redirecting to login..."}
+            {loading ? "Cargando..." : "Redirigiendo al inicio de sesión..."}
           </p>
         </div>
       </DashboardLayout>
@@ -70,9 +70,9 @@ export default function FundsPage() {
       <div className="p-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-slate-900">Funds</h1>
+            <h1 className="text-3xl font-semibold text-slate-900">Fondos</h1>
             <p className="mt-2 text-slate-600">
-              View and track your available funds
+              Visualizá y seguí tus fondos disponibles
             </p>
           </div>
 
@@ -84,16 +84,16 @@ export default function FundsPage() {
 
           {fundsLoading ? (
             <div className="card p-12 text-center">
-              <p className="text-slate-600">Loading funds...</p>
+              <p className="text-slate-600">Cargando fondos...</p>
             </div>
           ) : funds.length === 0 ? (
             <div className="card p-12 text-center">
               <TrendingUp className="mx-auto h-12 w-12 text-slate-400" />
               <h2 className="mt-4 text-xl font-semibold text-slate-900">
-                No Funds Available
+                No hay fondos disponibles
               </h2>
               <p className="mt-2 text-slate-600">
-                There are no funds available at this time.
+                No hay fondos disponibles en este momento.
               </p>
             </div>
           ) : (
@@ -124,7 +124,7 @@ export default function FundsPage() {
                     <ArrowRight className="h-5 w-5 text-slate-400 transition group-hover:translate-x-1 group-hover:text-blue-600" />
                   </div>
                   <div className="mt-4 flex items-center justify-between text-sm">
-                    <span className="text-slate-500">View details</span>
+                    <span className="text-slate-500">Ver detalles</span>
                   </div>
                 </Link>
               ))}
