@@ -51,11 +51,10 @@ export default function LoginPage() {
             <ArrowLeft className="h-4 w-4" />
             Volver al inicio
           </Link>
-
           <div>
-            <p className="text-sm uppercase tracking-[0.4em] text-slate-500">
+            <h1 className="mt-3 text-3xl font-semibold text-slate-900">
               Iniciar sesión
-            </p>
+            </h1>
           </div>
 
           <button

@@ -60,9 +60,9 @@ export default function SignupPage() {
           </Link>
 
           <div>
-            <p className="text-sm uppercase tracking-[0.4em] text-slate-500">
+            <h1 className="mt-3 text-3xl font-semibold text-slate-900">
               Crear cuenta
-            </p>
+            </h1>
             <p className="mt-2 text-slate-600">
               Creá tu cuenta para acceder a tu dashboard de inversiones y gestión de fondos.
             </p>
