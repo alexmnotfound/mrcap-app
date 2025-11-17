@@ -68,6 +68,27 @@ export interface MovementReportRow {
   share_price?: string | null;
 }
 
+export interface Fund {
+  id: number;
+  name: string;
+  currency: string;
+  created_at: string;
+}
+
+export interface FundNavPoint {
+  as_of_date: string;
+  nav_per_share: string;
+  total_aum: string;
+}
+
+export interface FundPerformance {
+  fund_id: number;
+  fund_name: string;
+  currency: string;
+  latest_nav_per_share?: string | null;
+  navs: FundNavPoint[];
+}
+
 export interface ApiError {
   detail: string;
 }

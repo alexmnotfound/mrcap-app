@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (profile) {
-      router.push("/dashboard");
+      router.push("/account/dashboard");
     }
   }, [profile, router]);
 
@@ -24,7 +24,7 @@ export default function LoginPage() {
     event.preventDefault();
     try {
       await loginWithEmail(email, password);
-      router.push("/dashboard");
+      router.push("/account/dashboard");
     } catch {
       // error is handled in context
     }
@@ -33,7 +33,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      router.push("/dashboard");
+      router.push("/account/dashboard");
     } catch {
       // error is handled in context
     }

@@ -18,7 +18,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (profile) {
-      router.push("/dashboard");
+      router.push("/account/dashboard");
     }
   }, [profile, router]);
 
@@ -31,7 +31,7 @@ export default function SignupPage() {
     
     try {
       await signupWithEmail(email, password, fullName);
-      router.push("/dashboard");
+      router.push("/account/dashboard");
     } catch {
       // error is handled in context
     }
@@ -40,7 +40,7 @@ export default function SignupPage() {
   const handleGoogleSignup = async () => {
     try {
       await signupWithGoogle();
-      router.push("/dashboard");
+      router.push("/account/dashboard");
     } catch {
       // error is handled in context
     }

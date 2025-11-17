@@ -101,7 +101,7 @@ export default function FundsPage() {
               {funds.map((fund) => (
                 <Link
                   key={fund.id}
-                  href={`/dashboard/funds/${fund.id}`}
+                  href={`/account/funds/${fund.id}`}
                   className="card group p-6 transition hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between">
