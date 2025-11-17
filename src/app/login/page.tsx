@@ -54,13 +54,7 @@ export default function LoginPage() {
 
           <div>
             <p className="text-sm uppercase tracking-[0.4em] text-slate-500">
-              Acceso seguro
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold text-slate-900">
               Iniciar sesión
-            </h1>
-            <p className="mt-2 text-slate-600">
-              Ingresá tu email y contraseña para acceder
             </p>
           </div>
 
