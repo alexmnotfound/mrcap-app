@@ -10,6 +10,9 @@
   --accent: #fdb515;
 }
 
+/* Tailwind v4 theme configuration */
+/* Note: @theme is a Tailwind v4 directive processed by PostCSS, not standard CSS */
+/* The linter warning about "Unknown at rule @theme" is expected and can be ignored */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -19,10 +22,7 @@
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse at top, rgba(37, 99, 235, 0.12), transparent 45%),
-    radial-gradient(circle at 20% 20%, rgba(253, 181, 21, 0.2), transparent 30%),
-    #f8fbff;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;

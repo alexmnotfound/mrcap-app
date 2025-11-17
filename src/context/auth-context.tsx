@@ -71,16 +71,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       setToken(persisted.token);
       setApiBase(persisted.apiBase);
-      const [me, myAccounts] = await Promise.all([
-        apiFetch<AppUser>("/api/users/me", {
+      
+      // Try to get user profile
+      let me: AppUser;
+      try {
+        me = await apiFetch<AppUser>("/api/users/me", {
           token: persisted.token ?? undefined,
           baseUrl: persisted.apiBase,
-        }),
-        apiFetch<AccountSummary[]>("/api/accounts/me", {
+        });
+      } catch (err: any) {
+        // If user not found, try to create them via signup endpoint
+        if (err.message?.includes("User not found") || err.message?.includes("404")) {
+          try {
+            me = await apiFetch<AppUser>("/api/users/signup", {
+              token: persisted.token ?? undefined,
+              baseUrl: persisted.apiBase,
+              method: "POST",
+            });
+          } catch (signupErr: any) {
+            // If signup fails with "already exists", try getting user again
+            if (signupErr.message?.includes("already exists")) {
+              me = await apiFetch<AppUser>("/api/users/me", {
+                token: persisted.token ?? undefined,
+                baseUrl: persisted.apiBase,
+              });
+            } else {
+              throw signupErr;
+            }
+          }
+        } else {
+          throw err;
+        }
+      }
+
+      // Get accounts (might be empty for new users)
+      let myAccounts: AccountSummary[] = [];
+      try {
+        myAccounts = await apiFetch<AccountSummary[]>("/api/accounts/me", {
           token: persisted.token ?? undefined,
           baseUrl: persisted.apiBase,
-        }),
-      ]);
+        });
+      } catch (err) {
+        // Accounts endpoint might fail for new users, that's okay
+        console.warn("Failed to fetch accounts:", err);
+      }
+
       setProfile(me);
       setAccounts(myAccounts);
     } catch (err) {
@@ -108,16 +143,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     const base = nextBase?.trim() || apiBase || getDefaultApiBase();
     try {
-      const [me, myAccounts] = await Promise.all([
-        apiFetch<AppUser>("/api/users/me", {
+      // Try to get user profile
+      let me: AppUser;
+      try {
+        me = await apiFetch<AppUser>("/api/users/me", {
           token: nextToken,
           baseUrl: base,
-        }),
-        apiFetch<AccountSummary[]>("/api/accounts/me", {
+        });
+      } catch (err: any) {
+        // If user not found, try to create them via signup endpoint
+        if (err.message?.includes("User not found") || err.message?.includes("404")) {
+          try {
+            me = await apiFetch<AppUser>("/api/users/signup", {
+              token: nextToken,
+              baseUrl: base,
+              method: "POST",
+            });
+          } catch (signupErr: any) {
+            // If signup fails with "already exists", try getting user again
+            if (signupErr.message?.includes("already exists")) {
+              me = await apiFetch<AppUser>("/api/users/me", {
+                token: nextToken,
+                baseUrl: base,
+              });
+            } else {
+              throw signupErr;
+            }
+          }
+        } else {
+          throw err;
+        }
+      }
+
+      // Get accounts (might be empty for new users)
+      let myAccounts: AccountSummary[] = [];
+      try {
+        myAccounts = await apiFetch<AccountSummary[]>("/api/accounts/me", {
           token: nextToken,
           baseUrl: base,
-        }),
-      ]);
+        });
+      } catch (err) {
+        // Accounts endpoint might fail for new users, that's okay
+        console.warn("Failed to fetch accounts:", err);
+      }
+
       setToken(nextToken ?? null);
       setApiBase(base);
       setProfile(me);

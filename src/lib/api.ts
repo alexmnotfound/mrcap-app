@@ -1,7 +1,7 @@
 import type { ApiError } from "@/types/api";
 
 const DEFAULT_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 type FetchOptions = RequestInit & { token?: string | null; baseUrl?: string };
 
@@ -11,30 +11,91 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { token, baseUrl, headers, ...rest } = options;
   const url = `${baseUrl ?? DEFAULT_BASE}${path}`;
-  const response = await fetch(url, {
-    ...rest,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...rest,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(headers ?? {}),
+      },
+      cache: "no-store",
+    });
+  } catch (err) {
+    if (err instanceof TypeError && err.message.includes("fetch")) {
+      throw new Error(`Failed to connect to API at ${url}. Is the server running?`);
+    }
+    throw err;
+  }
+
+  const contentType = response.headers.get("content-type");
+  const isJson = contentType?.includes("application/json");
+
+  // Clone response for error handling if needed
+  let responseText: string | null = null;
 
   if (!response.ok) {
-    let message = "Request failed";
+    let message = `Request failed with status ${response.status}`;
     try {
-      const payload = (await response.json()) as ApiError;
-      if (payload?.detail) {
-        message = payload.detail;
+      const text = await response.text();
+      responseText = text;
+      
+      if (isJson) {
+        try {
+          const payload = JSON.parse(text) as ApiError;
+          if (payload?.detail) {
+            message = payload.detail;
+          }
+        } catch {
+          // If JSON parse fails, use the text
+          if (text.length < 200) {
+            message = `${message}: ${text}`;
+          }
+        }
+      } else {
+        // Not JSON, include text if short
+        if (text.length < 200) {
+          message = `${message}: ${text}`;
+        } else {
+          message = `${message} (received ${contentType || "unknown content type"})`;
+        }
       }
     } catch {
-      // ignore
+      // ignore errors reading response
     }
     throw new Error(message);
   }
 
-  return (await response.json()) as T;
+  // Response is OK, parse JSON
+  try {
+    if (!isJson) {
+      const text = await response.text();
+      throw new Error(
+        `Expected JSON but got ${contentType || "unknown content type"}. ` +
+        `Response: ${text.substring(0, 200)}`
+      );
+    }
+    
+    const text = await response.text();
+    try {
+      return JSON.parse(text) as T;
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        throw new Error(
+          `Invalid JSON response from ${path}. ` +
+          `Response: ${text.substring(0, 200)}`
+        );
+      }
+      throw err;
+    }
+  } catch (err) {
+    if (err instanceof Error && (err.message.includes("Expected JSON") || err.message.includes("Invalid JSON"))) {
+      throw err;
+    }
+    throw new Error(`Failed to parse response from ${path}: ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 export function getDefaultApiBase() {
