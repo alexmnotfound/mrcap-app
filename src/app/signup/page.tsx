@@ -1,23 +1,46 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, UserPlus, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { getDefaultApiBase } from "@/lib/api";
 
 export default function SignupPage() {
-  const { login, error, loading } = useAuth();
-  const [apiBase, setApiBase] = useState(getDefaultApiBase());
-  const [token, setToken] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const router = useRouter();
+  const { signupWithEmail, signupWithGoogle, error, loading, profile } = useAuth();
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (profile) {
+      router.push("/dashboard");
+    }
+  }, [profile, router]);
+
+  const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSuccessMessage("");
+    
+    if (password !== confirmPassword) {
+      return;
+    }
+    
     try {
-      await login({ token: token.trim() || undefined, apiBase });
-      setSuccessMessage("¡Cuenta creada! Redirigiendo al dashboard.");
+      await signupWithEmail(email, password, fullName);
+      router.push("/dashboard");
+    } catch {
+      // error is handled in context
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      await signupWithGoogle();
+      router.push("/dashboard");
     } catch {
       // error is handled in context
     }
@@ -40,52 +63,132 @@ export default function SignupPage() {
             <p className="text-sm uppercase tracking-[0.4em] text-slate-500">
               Crear cuenta
             </p>
-            <h1 className="mt-3 text-3xl font-semibold text-slate-900">
-              Abrí tu cuenta de trading
-            </h1>
             <p className="mt-2 text-slate-600">
-              Para crear una cuenta, necesitás un token de Firebase válido. Si
-              estás en modo desarrollo, contactá a un administrador para obtener
-              acceso.
+              Creá tu cuenta para acceder a tu dashboard de inversiones y gestión de fondos.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <label className="block text-sm font-semibold text-slate-900">
-              URL Base de la API
-              <input
-                value={apiBase}
-                onChange={(event) => setApiBase(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                placeholder="http://localhost:3000"
+          <button
+            type="button"
+            onClick={handleGoogleSignup}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4"
               />
-            </label>
-
-            <label className="block text-sm font-semibold text-slate-900">
-              Token de Firebase ID
-              <textarea
-                value={token}
-                onChange={(event) => setToken(event.target.value)}
-                className="mt-2 h-32 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                placeholder="Pegá tu token de Firebase…"
-                required
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
               />
-            </label>
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+              />
+            </svg>
+            Registrarse con Google
+          </button>
 
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 text-sm text-blue-900">
-              <p className="font-semibold">¿Ya tenés una cuenta?</p>
-              <p className="mt-1">
-                Si ya tenés una cuenta,{" "}
-                <Link href="/login" className="font-semibold underline">
-                  iniciá sesión aquí
-                </Link>
-                .
-              </p>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
             </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-slate-500">o</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleEmailSubmit} className="space-y-5">
+            <label className="block text-sm font-medium text-slate-900">
+              Nombre completo*
+              <input
+                type="text"
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                required
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder="Juan Pérez"
+              />
+            </label>
+
+            <label className="block text-sm font-medium text-slate-900">
+              Email*
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder="mail@ejemplo.com"
+              />
+            </label>
+
+            <label className="block text-sm font-medium text-slate-900">
+              Contraseña*
+              <div className="relative mt-2">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  minLength={8}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Min. 8 caracteres"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </label>
+
+            <label className="block text-sm font-medium text-slate-900">
+              Confirmar contraseña*
+              <div className="relative mt-2">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  required
+                  minLength={8}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-10 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Repetí tu contraseña"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              {password !== confirmPassword && confirmPassword && (
+                <p className="mt-1 text-xs text-red-600">
+                  Las contraseñas no coinciden
+                </p>
+              )}
+            </label>
 
             <button
               type="submit"
-              disabled={loading || !token.trim()}
+              disabled={loading || password !== confirmPassword || !password || !confirmPassword}
               className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading ? (
@@ -106,17 +209,17 @@ export default function SignupPage() {
                 {error}
               </p>
             )}
-
-            {successMessage && (
-              <p className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-                {successMessage} Abrí{" "}
-                <Link href="/dashboard" className="font-semibold underline">
-                  el dashboard
-                </Link>{" "}
-                para continuar.
-              </p>
-            )}
           </form>
+
+          <div className="text-center text-sm text-slate-600">
+            ¿Ya tenés una cuenta?{" "}
+            <Link
+              href="/login"
+              className="font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Iniciá sesión aquí
+            </Link>
+          </div>
         </div>
       </div>
     </div>

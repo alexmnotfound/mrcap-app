@@ -16,6 +16,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 
 type AuthContextValue = {
@@ -28,6 +29,8 @@ type AuthContextValue = {
   login: (input: { token?: string; apiBase?: string }) => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  signupWithEmail: (email: string, password: string, fullName: string) => Promise<void>;
+  signupWithGoogle: () => Promise<void>;
   logout: () => void;
   refreshAccounts: () => Promise<void>;
 };
@@ -186,6 +189,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [login]);
 
+  const signupWithEmail = useCallback(async (email: string, password: string, fullName: string) => {
+    if (typeof window === "undefined" || !auth) {
+      throw new Error("Firebase not initialized");
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      // Create Firebase account
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
+      
+      // Update Firebase display name if provided
+      if (fullName && userCredential.user) {
+        try {
+          await userCredential.user.updateProfile({ displayName: fullName });
+        } catch (err) {
+          console.warn("Failed to update display name:", err);
+        }
+      }
+
+      // Create user in backend
+      await apiFetch<AppUser>("/api/users/signup", {
+        token: idToken,
+        baseUrl: apiBase || getDefaultApiBase(),
+        method: "POST",
+      });
+
+      // Login after signup
+      await login({ token: idToken });
+    } catch (err: any) {
+      let errorMessage = "Error al crear cuenta";
+      if (err.code === "auth/email-already-in-use") {
+        errorMessage = "Este email ya está en uso";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Email inválido";
+      } else if (err.code === "auth/weak-password") {
+        errorMessage = "La contraseña es muy débil";
+      } else if (err.message?.includes("User already exists")) {
+        errorMessage = "El usuario ya existe. Intentá iniciar sesión";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBase, login]);
+
+  const signupWithGoogle = useCallback(async () => {
+    if (typeof window === "undefined" || !auth) {
+      throw new Error("Firebase not initialized");
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      // Create Firebase account with Google
+      const result = await signInWithPopup(auth, googleAuthProvider);
+      const idToken = await result.user.getIdToken();
+
+      // Create user in backend
+      try {
+        await apiFetch<AppUser>("/api/users/signup", {
+          token: idToken,
+          baseUrl: apiBase || getDefaultApiBase(),
+          method: "POST",
+        });
+      } catch (signupErr: any) {
+        // If user already exists, that's okay - just login
+        if (!signupErr.message?.includes("User already exists")) {
+          throw signupErr;
+        }
+      }
+
+      // Login after signup
+      await login({ token: idToken });
+    } catch (err: any) {
+      let errorMessage = "Error al crear cuenta con Google";
+      if (err.code === "auth/popup-closed-by-user") {
+        errorMessage = "El popup fue cerrado. Por favor intentá de nuevo";
+      } else if (err.code === "auth/cancelled-popup-request") {
+        errorMessage = "Registro cancelado";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBase, login]);
+
   const refreshAccounts = useCallback(async () => {
     try {
       const data = await apiFetch<AccountSummary[]>("/api/accounts/me", {
@@ -224,10 +319,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithEmail,
       loginWithGoogle,
+      signupWithEmail,
+      signupWithGoogle,
       logout,
       refreshAccounts,
     }),
-    [token, apiBase, profile, accounts, loading, error, login, loginWithEmail, loginWithGoogle, logout, refreshAccounts]
+    [token, apiBase, profile, accounts, loading, error, login, loginWithEmail, loginWithGoogle, signupWithEmail, signupWithGoogle, logout, refreshAccounts]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
