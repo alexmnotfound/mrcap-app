@@ -3,7 +3,7 @@
 import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
 export default function LoginPage() {
@@ -40,12 +40,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white px-4 py-12">
-      <div className="relative z-10 mx-auto flex max-w-md items-center justify-center">
-        <div className="w-full space-y-8">
+    <div className="relative min-h-screen overflow-hidden bg-[#f6f9ff] px-4 py-12">
+      <div className="absolute inset-0 dot-grid opacity-60" />
+      <div className="relative z-10 mx-auto flex max-w-xl items-center justify-center">
+        <div className="card w-full space-y-8 p-8 lg:p-10">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 transition hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver al inicio
+          </Link>
+
           <div>
-            <h1 className="text-4xl font-semibold text-blue-900">Iniciar sesión</h1>
-            <p className="mt-2 text-base text-slate-500">
+            <p className="text-sm uppercase tracking-[0.4em] text-slate-500">
+              Acceso seguro
+            </p>
+            <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+              Iniciar sesión
+            </h1>
+            <p className="mt-2 text-slate-600">
               Ingresá tu email y contraseña para acceder
             </p>
           </div>
@@ -144,7 +158,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading ? (
                 <>
@@ -157,7 +171,7 @@ export default function LoginPage() {
             </button>
 
             {error && (
-              <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {error}
               </p>
             )}
