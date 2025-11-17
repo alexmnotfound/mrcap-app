@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronLeft,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { useState, useEffect } from "react";
@@ -120,6 +121,9 @@ export default function DashboardSidebar({
     if (href === "/account/dashboard") {
       return pathname === "/account/dashboard";
     }
+    if (href === "/account/admin") {
+      return pathname === "/account/admin";
+    }
     return pathname.startsWith(href);
   };
 
@@ -128,11 +132,25 @@ export default function DashboardSidebar({
     router.push("/");
   };
 
-  // Build nav sections with funds as children
+  // Build nav sections with funds as children and conditionally add admin dashboard
   const navSections: NavSection[] = baseNavSections.map((section) => {
+    let items = section.items;
+    
+    // Add Admin Dashboard to Gestión section if user is admin
+    if (section.title === "Gestión" && profile?.is_admin) {
+      items = [
+        ...items,
+        {
+          label: "Admin Dashboard",
+          href: "/account/admin",
+          icon: Shield,
+        },
+      ];
+    }
+    
     return {
       ...section,
-      items: section.items.map((item) => {
+      items: items.map((item) => {
         if (item.label === "Fondos") {
           return {
             ...item,
