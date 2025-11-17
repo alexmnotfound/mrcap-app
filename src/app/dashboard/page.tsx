@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, ArrowRight, BarChart3, LogOut } from "lucide-react";
+import { Activity, ArrowRight, BarChart3 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { apiFetch } from "@/lib/api";
+import DashboardLayout from "@/components/DashboardLayout";
 import type {
   AccountSummary,
   MovementReportRow,
@@ -130,149 +131,271 @@ export default function DashboardPage() {
 
   if (!profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#04050d] text-white">
-        <p className="text-white/70">
-          {loading ? "Loading your workspace..." : "Redirecting to login..."}
-        </p>
-      </div>
+      <DashboardLayout>
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-slate-600">
+            {loading ? "Loading your workspace..." : "Redirecting to login..."}
+          </p>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#04050d] text-white">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <header className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-emerald-500/10 backdrop-blur-xl md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.4em] text-white/50">
-              Welcome back
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold">{profile.full_name}</h1>
-            <p className="text-white/70">{profile.email}</p>
+    <DashboardLayout>
+      <div className="p-8">
+        <div className="mx-auto max-w-7xl">
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-semibold text-slate-900">Dashboard</h1>
+            <p className="mt-2 text-slate-600">Welcome back, {profile.full_name}</p>
           </div>
-          <div className="flex gap-3">
-            {profile.is_admin && (
-              <div className="rounded-full border border-emerald-400/30 px-4 py-2 text-sm font-semibold text-emerald-200">
-                Admin
-              </div>
-            )}
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:text-white"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </button>
-          </div>
-        </header>
 
-        {error && (
-          <p className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
-            {error}
-          </p>
-        )}
-
-        <section className="mt-10 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-sm uppercase tracking-[0.4em] text-white/50">
-              Accounts
-            </p>
-            <p className="mt-3 text-4xl font-semibold">{accounts.length}</p>
-            <p className="mt-1 text-sm text-white/60">
-              Active vehicles in your name
-            </p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-sm uppercase tracking-[0.4em] text-white/50">
-              Hedge funds
-            </p>
-            <p className="mt-3 text-4xl font-semibold">
-              {hedgeFunds.length || "—"}
-            </p>
-            <p className="mt-1 text-sm text-white/60">
-              Current fund exposures
-            </p>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-sm uppercase tracking-[0.4em] text-white/50">
-              Status
-            </p>
-            <p className="mt-3 text-4xl font-semibold capitalize">
-              {profile.status}
-            </p>
-            <p className="mt-1 text-sm text-white/60">Profile health</p>
-          </div>
-        </section>
-
-        <section className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Movements</h2>
-              {movementsLoading && (
-                <span className="text-sm text-white/60">Refreshing…</span>
-              )}
+          {error && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {error}
             </div>
-            {accounts.map((account) => (
-              <div key={account.account_id} className="mt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.4em] text-white/50">
-                      Account {account.account_number}
-                    </p>
-                    <p className="text-lg font-semibold">
-                      Net invested {currency.format(Number(account.net_invested))}
-                    </p>
+          )}
+
+          {/* Stats Cards */}
+          <section className="mb-8 grid gap-6 lg:grid-cols-3">
+            <div className="card p-6">
+              <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                Accounts
+              </p>
+              <p className="mt-3 text-4xl font-semibold text-slate-900">{accounts.length}</p>
+              <p className="mt-1 text-sm text-slate-600">
+                Active vehicles in your name
+              </p>
+            </div>
+            <div className="card p-6">
+              <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                Hedge funds
+              </p>
+              <p className="mt-3 text-4xl font-semibold text-slate-900">
+                {hedgeFunds.length || "—"}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                Current fund exposures
+              </p>
+            </div>
+            <div className="card p-6">
+              <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                Status
+              </p>
+              <p className="mt-3 text-4xl font-semibold capitalize text-slate-900">
+                {profile.status}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">Profile health</p>
+            </div>
+          </section>
+
+          {/* Main Content Grid */}
+          <section className="mb-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <div className="card p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-slate-900">Movements</h2>
+                {movementsLoading && (
+                  <span className="text-sm text-slate-500">Refreshing…</span>
+                )}
+              </div>
+              {accounts.map((account) => (
+                <div key={account.account_id} className="mt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                        Account {account.account_number}
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-slate-900">
+                        Net invested {currency.format(Number(account.net_invested))}
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                      Cash + Fund Share
+                    </div>
                   </div>
-                  <div className="rounded-full border border-white/10 px-4 py-1 text-xs text-white/60">
-                    Cash + Fund Share
+                  <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+                    <table className="min-w-full text-sm">
+                      <thead className="bg-slate-50 text-left text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Date</th>
+                          <th className="px-4 py-3 font-medium">Type</th>
+                          <th className="px-4 py-3 font-medium">Amount / Shares</th>
+                          <th className="px-4 py-3 font-medium">Details</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(movements[account.account_id] ?? []).map((movement) => (
+                          <tr
+                            key={`${movement.type}-${movement.id}`}
+                            className="border-t border-slate-100 text-slate-700"
+                          >
+                            <td className="px-4 py-3">
+                              {dateFormat.format(
+                                new Date(movement.effective_date)
+                              )}
+                            </td>
+                            <td className="px-4 py-3 capitalize font-medium">
+                              {movement.type === "cash"
+                                ? movement.cash_type
+                                : movement.share_movement_type}
+                            </td>
+                            <td className="px-4 py-3">
+                              {movement.type === "cash"
+                                ? currency.format(Number(movement.amount ?? 0))
+                                : `${movement.shares_change ?? "—"} @ ${
+                                    movement.share_price ?? "—"
+                                  }`}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-slate-500">
+                              {movement.type === "fund_share"
+                                ? `Fund: ${movement.fund_name ?? "N/A"}`
+                                : movement.currency}
+                            </td>
+                          </tr>
+                        ))}
+                        {movements[account.account_id]?.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={4}
+                              className="px-4 py-6 text-center text-slate-500"
+                            >
+                              No movements recorded yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-                <div className="mt-4 overflow-hidden rounded-2xl border border-white/5">
+              ))}
+              {accounts.length === 0 && (
+                <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
+                  No accounts assigned yet.
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              <div className="card p-6">
+                <h2 className="text-2xl font-semibold text-slate-900">Profile</h2>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Firebase UID</p>
+                    <p className="mt-1 font-mono text-sm text-slate-900 break-all">
+                      {profile.firebase_uid}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Created</p>
+                    <p className="mt-1 text-slate-900">
+                      {dateFormat.format(new Date(profile.created_at))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card border-blue-200 bg-blue-50 p-6">
+                <div className="flex items-center gap-3">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  <p className="text-sm font-medium uppercase tracking-wider text-blue-700">
+                    Hedge fund exposure
+                  </p>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {hedgeFunds.length === 0 && (
+                    <p className="text-sm text-blue-700/70">
+                      No fund positions yet.
+                    </p>
+                  )}
+                  {hedgeFunds.map((position) => (
+                    <div
+                      key={`${position.accountNumber}-${position.fund_id}`}
+                      className="rounded-lg border border-blue-200 bg-white p-3"
+                    >
+                      <p className="text-sm text-blue-700/80">
+                        {position.accountNumber} · {position.fund_name}
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-blue-900">
+                        {position.total_shares} shares
+                      </p>
+                      {position.latest_nav_per_share && (
+                        <p className="mt-1 text-xs text-blue-700/70">
+                          NAV {position.latest_nav_per_share} ·{" "}
+                          {position.currency}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Admin Section */}
+          {profile.is_admin && (
+            <section className="space-y-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                    Admin view
+                  </p>
+                  <h2 className="mt-1 text-3xl font-semibold text-slate-900">Firmwide overview</h2>
+                </div>
+                {adminLoading && (
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-1 text-xs font-medium text-slate-600">
+                    Loading…
+                  </span>
+                )}
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-xl font-semibold text-slate-900">Account summaries</h3>
+                </div>
+                <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
-                    <thead className="bg-white/5 text-left text-white/60">
+                    <thead className="bg-slate-50 text-left text-slate-600">
                       <tr>
-                        <th className="px-4 py-2">Date</th>
-                        <th className="px-4 py-2">Type</th>
-                        <th className="px-4 py-2">Amount / Shares</th>
-                        <th className="px-4 py-2">Details</th>
+                        <th className="px-4 py-3 font-medium">Investor</th>
+                        <th className="px-4 py-3 font-medium">Account</th>
+                        <th className="px-4 py-3 font-medium">Net invested</th>
+                        <th className="px-4 py-3 font-medium">Deposits</th>
+                        <th className="px-4 py-3 font-medium">Fees</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(movements[account.account_id] ?? []).map((movement) => (
+                      {adminSummaries.map((summary) => (
                         <tr
-                          key={`${movement.type}-${movement.id}`}
-                          className="border-t border-white/5 text-white/80"
+                          key={summary.account_id}
+                          className="border-t border-slate-100 text-slate-700"
                         >
                           <td className="px-4 py-3">
-                            {dateFormat.format(
-                              new Date(movement.effective_date)
-                            )}
+                            <div className="font-medium text-slate-900">{summary.user_full_name}</div>
+                            <div className="text-xs text-slate-500">
+                              {summary.user_email}
+                            </div>
                           </td>
-                          <td className="px-4 py-3 capitalize">
-                            {movement.type === "cash"
-                              ? movement.cash_type
-                              : movement.share_movement_type}
+                          <td className="px-4 py-3">{summary.account_number}</td>
+                          <td className="px-4 py-3 font-medium">
+                            {currency.format(Number(summary.net_invested))}
                           </td>
                           <td className="px-4 py-3">
-                            {movement.type === "cash"
-                              ? currency.format(Number(movement.amount ?? 0))
-                              : `${movement.shares_change ?? "—"} @ ${
-                                  movement.share_price ?? "—"
-                                }`}
+                            {currency.format(Number(summary.total_deposits))}
                           </td>
-                          <td className="px-4 py-3 text-xs text-white/60">
-                            {movement.type === "fund_share"
-                              ? `Fund: ${movement.fund_name ?? "N/A"}`
-                              : movement.currency}
+                          <td className="px-4 py-3">
+                            {currency.format(Number(summary.total_fees))}
                           </td>
                         </tr>
                       ))}
-                      {movements[account.account_id]?.length === 0 && (
+                      {adminSummaries.length === 0 && (
                         <tr>
                           <td
-                            colSpan={4}
-                            className="px-4 py-6 text-center text-white/50"
+                            colSpan={5}
+                            className="px-4 py-6 text-center text-slate-500"
                           >
-                            No movements recorded yet.
+                            No accounts yet.
                           </td>
                         </tr>
                       )}
@@ -280,191 +403,64 @@ export default function DashboardPage() {
                   </table>
                 </div>
               </div>
-            ))}
-            {accounts.length === 0 && (
-              <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-6 text-white/60">
-                No accounts assigned yet.
-              </div>
-            )}
-          </div>
 
-          <div className="space-y-6">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <h2 className="text-2xl font-semibold">Profile</h2>
-              <p className="mt-4 text-sm text-white/60">Firebase UID</p>
-              <p className="font-mono text-sm text-white/80">
-                {profile.firebase_uid}
-              </p>
-              <p className="mt-4 text-sm text-white/60">Created</p>
-              <p className="text-white/80">
-                {dateFormat.format(new Date(profile.created_at))}
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-6 text-emerald-50">
-              <div className="flex items-center gap-3">
-                <Activity className="h-5 w-5" />
-                <p className="text-sm uppercase tracking-[0.4em]">
-                  Hedge fund exposure
-                </p>
-              </div>
-              <div className="mt-4 space-y-3">
-                {hedgeFunds.length === 0 && (
-                  <p className="text-sm text-emerald-100/80">
-                    No fund positions yet.
-                  </p>
-                )}
-                {hedgeFunds.map((position) => (
-                  <div
-                    key={`${position.accountNumber}-${position.fund_id}`}
-                    className="rounded-2xl border border-emerald-400/20 bg-black/10 p-3"
-                  >
-                    <p className="text-sm text-emerald-100/70">
-                      {position.accountNumber} · {position.fund_name}
-                    </p>
-                    <p className="text-lg font-semibold">
-                      {position.total_shares} shares
-                    </p>
-                    {position.latest_nav_per_share && (
-                      <p className="text-xs text-emerald-100/70">
-                        NAV {position.latest_nav_per_share} ·{" "}
-                        {position.currency}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {profile.is_admin && (
-          <section className="mt-12 space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.4em] text-white/50">
-                  Admin view
-                </p>
-                <h2 className="text-3xl font-semibold">Firmwide overview</h2>
-              </div>
-              {adminLoading && (
-                <span className="rounded-full border border-white/10 px-4 py-1 text-xs text-white/70">
-                  Loading…
-                </span>
-              )}
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="flex items-center gap-3 text-white/70">
-                <BarChart3 className="h-5 w-5" />
-                <h3 className="text-xl font-semibold">Account summaries</h3>
-              </div>
-              <div className="mt-4 overflow-x-auto text-sm">
-                <table className="min-w-full">
-                  <thead className="bg-white/5 text-left text-white/60">
-                    <tr>
-                      <th className="px-4 py-2">Investor</th>
-                      <th className="px-4 py-2">Account</th>
-                      <th className="px-4 py-2">Net invested</th>
-                      <th className="px-4 py-2">Deposits</th>
-                      <th className="px-4 py-2">Fees</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {adminSummaries.map((summary) => (
-                      <tr
-                        key={summary.account_id}
-                        className="border-t border-white/5 text-white/80"
-                      >
-                        <td className="px-4 py-3">
-                          {summary.user_full_name}
-                          <p className="text-xs text-white/50">
-                            {summary.user_email}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">{summary.account_number}</td>
-                        <td className="px-4 py-3">
-                          {currency.format(Number(summary.net_invested))}
-                        </td>
-                        <td className="px-4 py-3">
-                          {currency.format(Number(summary.total_deposits))}
-                        </td>
-                        <td className="px-4 py-3">
-                          {currency.format(Number(summary.total_fees))}
-                        </td>
-                      </tr>
-                    ))}
-                    {adminSummaries.length === 0 && (
+              <div className="card p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <ArrowRight className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-xl font-semibold text-slate-900">Global movements</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-50 text-left text-slate-600">
                       <tr>
-                        <td
-                          colSpan={5}
-                          className="px-4 py-6 text-center text-white/50"
+                        <th className="px-4 py-3 font-medium">Investor</th>
+                        <th className="px-4 py-3 font-medium">Account</th>
+                        <th className="px-4 py-3 font-medium">Date</th>
+                        <th className="px-4 py-3 font-medium">Cash</th>
+                        <th className="px-4 py-3 font-medium">Fund shares</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminReport.map((row) => (
+                        <tr
+                          key={`${row.cash_movement_id}-${row.account_id}`}
+                          className="border-t border-slate-100 text-slate-700"
                         >
-                          No accounts yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                          <td className="px-4 py-3">{row.user_full_name}</td>
+                          <td className="px-4 py-3">{row.account_number}</td>
+                          <td className="px-4 py-3">
+                            {dateFormat.format(new Date(row.effective_date))}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="capitalize">{row.cash_movement_type}</span> ·{" "}
+                            {currency.format(Number(row.amount))}
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            {row.shares_change
+                              ? `${row.shares_change} @ ${row.share_price}`
+                              : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                      {adminReport.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="px-4 py-6 text-center text-slate-500"
+                          >
+                            No movements yet.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="flex items-center gap-3 text-white/70">
-                <ArrowRight className="h-5 w-5" />
-                <h3 className="text-xl font-semibold">Global movements</h3>
-              </div>
-              <div className="mt-4 overflow-x-auto text-sm">
-                <table className="min-w-full">
-                  <thead className="bg-white/5 text-left text-white/60">
-                    <tr>
-                      <th className="px-4 py-2">Investor</th>
-                      <th className="px-4 py-2">Account</th>
-                      <th className="px-4 py-2">Date</th>
-                      <th className="px-4 py-2">Cash</th>
-                      <th className="px-4 py-2">Fund shares</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {adminReport.map((row) => (
-                      <tr
-                        key={`${row.cash_movement_id}-${row.account_id}`}
-                        className="border-t border-white/5 text-white/80"
-                      >
-                        <td className="px-4 py-3">{row.user_full_name}</td>
-                        <td className="px-4 py-3">{row.account_number}</td>
-                        <td className="px-4 py-3">
-                          {dateFormat.format(new Date(row.effective_date))}
-                        </td>
-                        <td className="px-4 py-3">
-                          {row.cash_movement_type} ·{" "}
-                          {currency.format(Number(row.amount))}
-                        </td>
-                        <td className="px-4 py-3 text-xs">
-                          {row.shares_change
-                            ? `${row.shares_change} @ ${row.share_price}`
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                    {adminReport.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="px-4 py-6 text-center text-white/50"
-                        >
-                          No movements yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 
