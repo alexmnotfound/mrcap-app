@@ -15,6 +15,12 @@ type MovementsMap = Record<number, UserMovement[]>;
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const numberFormat = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
@@ -92,6 +98,32 @@ export default function DashboardPage() {
     );
   }, [accounts]);
 
+  // Calculate financial metrics
+  const financialMetrics = useMemo(() => {
+    let totalBalance = 0;
+    let totalInvested = 0;
+
+    accounts.forEach((account) => {
+      // Sum net_invested for total invested
+      totalInvested += Number(account.net_invested) || 0;
+
+      // Sum market_value for all positions (balance)
+      account.positions.forEach((position) => {
+        if (position.market_value) {
+          totalBalance += Number(position.market_value) || 0;
+        }
+      });
+    });
+
+    const gains = totalBalance - totalInvested;
+
+    return {
+      balance: totalBalance,
+      gains: gains,
+      totalInvested: totalInvested,
+    };
+  }, [accounts]);
+
   if (!profile) {
     return (
       <DashboardLayout>
@@ -124,32 +156,43 @@ export default function DashboardPage() {
           <section className="mb-8 grid gap-6 lg:grid-cols-3">
             <div className="card p-6">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Cuentas
-              </p>
-              <p className="mt-3 text-4xl font-semibold text-slate-900">{accounts.length}</p>
-              <p className="mt-1 text-sm text-slate-600">
-                Vehículos activos a tu nombre
-              </p>
-            </div>
-            <div className="card p-6">
-              <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Fondos de inversión
+                Balance
               </p>
               <p className="mt-3 text-4xl font-semibold text-slate-900">
-                {hedgeFunds.length || "—"}
+                {currency.format(financialMetrics.balance)}
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Exposiciones actuales a fondos
+                Valor total de tu portafolio
               </p>
             </div>
             <div className="card p-6">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                Estado
+                Ganancias
               </p>
-              <p className="mt-3 text-4xl font-semibold capitalize text-slate-900">
-                {profile.status}
+              <p
+                className={`mt-3 text-4xl font-semibold ${
+                  financialMetrics.gains >= 0
+                    ? "text-green-600"
+                    : "text-red-600"
+                }`}
+              >
+                {financialMetrics.gains >= 0 ? "+" : ""}
+                {currency.format(financialMetrics.gains)}
               </p>
-              <p className="mt-1 text-sm text-slate-600">Salud del perfil</p>
+              <p className="mt-1 text-sm text-slate-600">
+                {financialMetrics.gains >= 0 ? "Ganancia" : "Pérdida"} total
+              </p>
+            </div>
+            <div className="card p-6">
+              <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                Total Invertido
+              </p>
+              <p className="mt-3 text-4xl font-semibold text-slate-900">
+                {currency.format(financialMetrics.totalInvested)}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                Inversión neta acumulada
+              </p>
             </div>
           </section>
 
@@ -173,9 +216,7 @@ export default function DashboardPage() {
                         Inversión neta {currency.format(Number(account.net_invested))}
                       </p>
                     </div>
-                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-                      Efectivo + Participaciones
-                    </div>
+
                   </div>
                   <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
                     <table className="min-w-full text-sm">
@@ -206,8 +247,8 @@ export default function DashboardPage() {
                             <td className="px-4 py-3">
                               {movement.type === "cash"
                                 ? currency.format(Number(movement.amount ?? 0))
-                                : `${movement.shares_change ?? "—"} @ ${
-                                    movement.share_price ?? "—"
+                                : `${movement.shares_change ? numberFormat.format(Number(movement.shares_change)) : "—"} @ ${
+                                    movement.share_price ? numberFormat.format(Number(movement.share_price)) : "—"
                                   }`}
                             </td>
                             <td className="px-4 py-3 text-xs text-slate-500">
@@ -240,24 +281,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-6">
-              <div className="card p-6">
-                <h2 className="text-2xl font-semibold text-slate-900">Perfil</h2>
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Firebase UID</p>
-                    <p className="mt-1 font-mono text-sm text-slate-900 break-all">
-                      {profile.firebase_uid}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Creado</p>
-                    <p className="mt-1 text-slate-900">
-                      {dateFormat.format(new Date(profile.created_at))}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               <div className="card border-blue-200 bg-blue-50 p-6">
                 <div className="flex items-center gap-3">
                   <Activity className="h-5 w-5 text-blue-600" />
@@ -280,11 +303,11 @@ export default function DashboardPage() {
                         {position.accountNumber} · {position.fund_name}
                       </p>
                       <p className="mt-1 text-lg font-semibold text-blue-900">
-                        {position.total_shares} participaciones
+                        {numberFormat.format(Number(position.total_shares))} participaciones
                       </p>
                       {position.latest_share_value && (
                         <p className="mt-1 text-xs text-blue-700/70">
-                          NAV {position.latest_share_value} ·{" "}
+                          Valor cuota: {numberFormat.format(Number(position.latest_share_value))} ·{" "}
                           {position.currency}
                         </p>
                       )}
