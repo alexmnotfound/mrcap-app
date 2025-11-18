@@ -3,11 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { TrendingUp, ArrowRight, DollarSign } from "lucide-react";
+import { TrendingUp, ArrowRight, DollarSign, BarChart3 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { apiFetch } from "@/lib/api";
 import DashboardLayout from "@/components/DashboardLayout";
-import type { Fund } from "@/types/api";
+import type { Fund, FundPerformance } from "@/types/api";
+
+const currency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 2,
+});
+
+const dateFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 
 export default function FundsPage() {
   const router = useRouter();
@@ -15,6 +27,8 @@ export default function FundsPage() {
   const [funds, setFunds] = useState<Fund[]>([]);
   const [fundsLoading, setFundsLoading] = useState(false);
   const [fundsError, setFundsError] = useState<string | null>(null);
+  const [performance, setPerformance] = useState<FundPerformance[]>([]);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -48,6 +62,34 @@ export default function FundsPage() {
       }
     }
     fetchFunds();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, token, apiBase]);
+
+  useEffect(() => {
+    if (!profile || !token) return;
+
+    let cancelled = false;
+    async function fetchPerformance() {
+      setPerformanceLoading(true);
+      try {
+        const data = await apiFetch<FundPerformance[]>("/api/funds/performance?limit=100", {
+          token: token ?? undefined,
+          baseUrl: apiBase,
+        });
+        if (!cancelled) {
+          setPerformance(data);
+        }
+      } catch (err) {
+        // Silently fail, performance is optional
+      } finally {
+        if (!cancelled) {
+          setPerformanceLoading(false);
+        }
+      }
+    }
+    fetchPerformance();
     return () => {
       cancelled = true;
     };
@@ -97,38 +139,41 @@ export default function FundsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {funds.map((fund) => (
-                <Link
-                  key={fund.id}
-                  href={`/account/funds/${fund.id}`}
-                  className="card group p-6 transition hover:shadow-lg"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-blue-100 p-2">
-                          <TrendingUp className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-slate-900">
-                            {fund.name}
-                          </h3>
-                          <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
-                            <DollarSign className="h-4 w-4" />
-                            <span>{fund.currency}</span>
+            <>
+              <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {funds.map((fund) => (
+                  <Link
+                    key={fund.id}
+                    href={`/account/funds/${fund.id}`}
+                    className="card group p-6 transition hover:shadow-lg"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-lg bg-blue-100 p-2">
+                            <TrendingUp className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-slate-900">
+                              {fund.name}
+                            </h3>
+                            <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
+                              <DollarSign className="h-4 w-4" />
+                              <span>{fund.currency}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
+                      <ArrowRight className="h-5 w-5 text-slate-400 transition group-hover:translate-x-1 group-hover:text-blue-600" />
                     </div>
-                    <ArrowRight className="h-5 w-5 text-slate-400 transition group-hover:translate-x-1 group-hover:text-blue-600" />
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Ver detalles</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    <div className="mt-4 flex items-center justify-between text-sm">
+                      <span className="text-slate-500">Ver detalles</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+            </>
           )}
         </div>
       </div>

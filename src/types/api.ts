@@ -21,7 +21,7 @@ export interface FundPosition {
   fund_name: string;
   currency: string;
   total_shares: string;
-  latest_nav_per_share?: string | null;
+  latest_share_value?: string | null;
   market_value?: string | null;
 }
 
@@ -77,15 +77,18 @@ export interface Fund {
 
 export interface FundNavPoint {
   as_of_date: string;
-  nav_per_share: string;
-  total_aum: string;
+  fund_accumulated: string;
+  shares_amount: string;
+  share_value: string;
+  delta_previous?: string | null;
+  delta_since_origin?: string | null;
 }
 
 export interface FundPerformance {
   fund_id: number;
   fund_name: string;
   currency: string;
-  latest_nav_per_share?: string | null;
+  latest_share_value?: string | null;
   navs: FundNavPoint[];
 }
 

@@ -282,9 +282,9 @@ export default function DashboardPage() {
                       <p className="mt-1 text-lg font-semibold text-blue-900">
                         {position.total_shares} participaciones
                       </p>
-                      {position.latest_nav_per_share && (
+                      {position.latest_share_value && (
                         <p className="mt-1 text-xs text-blue-700/70">
-                          NAV {position.latest_nav_per_share} ·{" "}
+                          NAV {position.latest_share_value} ·{" "}
                           {position.currency}
                         </p>
                       )}
