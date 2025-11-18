@@ -64,12 +64,16 @@ const baseNavSections: NavSection[] = [
 
 interface DashboardSidebarProps {
   isCollapsed: boolean;
+  isMobileMenuOpen?: boolean;
   onToggleCollapse: () => void;
+  onMobileMenuClose?: () => void;
 }
 
 export default function DashboardSidebar({
   isCollapsed,
+  isMobileMenuOpen = false,
   onToggleCollapse,
+  onMobileMenuClose,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -168,7 +172,9 @@ export default function DashboardSidebar({
   return (
     <aside
       className={`fixed left-0 top-0 z-40 h-screen border-r border-slate-200 bg-white shadow-sm transition-all duration-300 ${
-        isCollapsed ? "w-16" : "w-64"
+        isCollapsed ? "lg:w-16 w-64" : "w-64"
+      } ${
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       }`}
     >
       <div className="flex h-full flex-col">
@@ -188,17 +194,28 @@ export default function DashboardSidebar({
           ) : (
             <div className="flex-1" />
           )}
-          <button
-            onClick={onToggleCollapse}
-            className="flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-            aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-          >
-            <ChevronLeft
-              className={`h-4 w-4 transition-transform ${
-                isCollapsed ? "rotate-180" : ""
-              }`}
-            />
-          </button>
+          <div className="flex items-center gap-2">
+            {onMobileMenuClose && (
+              <button
+                onClick={onMobileMenuClose}
+                className="flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 lg:hidden"
+                aria-label="Cerrar menú"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            )}
+            <button
+              onClick={onToggleCollapse}
+              className="hidden h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 lg:flex"
+              aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+            >
+              <ChevronLeft
+                className={`h-4 w-4 transition-transform ${
+                  isCollapsed ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
