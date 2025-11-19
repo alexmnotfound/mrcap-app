@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity } from "lucide-react";
+import { Activity, TrendingUp } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { apiFetch } from "@/lib/api";
 import DashboardLayout from "@/components/DashboardLayout";
 import type {
   UserMovement,
+  FundPerformance,
 } from "@/types/api";
 
 type MovementsMap = Record<number, UserMovement[]>;
@@ -43,6 +44,8 @@ export default function DashboardPage() {
   } = useAuth();
   const [movements, setMovements] = useState<MovementsMap>({});
   const [movementsLoading, setMovementsLoading] = useState(false);
+  const [fundPerformance, setFundPerformance] = useState<FundPerformance[]>([]);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -89,6 +92,58 @@ export default function DashboardPage() {
     };
   }, [accounts, apiBase, profile, token]);
 
+  // Fetch fund performance data
+  useEffect(() => {
+    if (!profile || accounts.length === 0) return;
+    let cancelled = false;
+    async function fetchPerformance() {
+      setPerformanceLoading(true);
+      try {
+        // Get unique fund IDs from positions
+        const fundIds = new Set<number>();
+        accounts.forEach((account) => {
+          account.positions.forEach((position) => {
+            if (position.fund_id) {
+              fundIds.add(position.fund_id);
+            }
+          });
+        });
+
+        // Fetch performance for each fund
+        const performanceData = await Promise.all(
+          Array.from(fundIds).map(async (fundId) => {
+            try {
+              return await apiFetch<FundPerformance>(
+                `/api/funds/${fundId}/performance?limit=100`,
+                {
+                  token: token ?? undefined,
+                  baseUrl: apiBase,
+                }
+              );
+            } catch (err) {
+              console.error(`Error fetching performance for fund ${fundId}:`, err);
+              return null;
+            }
+          })
+        );
+
+        if (!cancelled) {
+          setFundPerformance(performanceData.filter((p): p is FundPerformance => p !== null));
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) {
+          setPerformanceLoading(false);
+        }
+      }
+    }
+    fetchPerformance();
+    return () => {
+      cancelled = true;
+    };
+  }, [accounts, apiBase, profile, token]);
+
   const hedgeFunds = useMemo(() => {
     return accounts.flatMap((account) =>
       account.positions.map((position) => ({
@@ -124,6 +179,127 @@ export default function DashboardPage() {
     };
   }, [accounts]);
 
+  // Extract share purchases and calculate evolution
+  const sharePurchases = useMemo(() => {
+    const purchases: Array<{
+      id: number;
+      date: Date;
+      accountNumber: string;
+      fundId: number;
+      fundName: string;
+      shares: number;
+      buyPrice: number;
+      currency: string;
+    }> = [];
+
+    Object.entries(movements).forEach(([accountId, accountMovements]) => {
+      const account = accounts.find((a) => a.account_id === Number(accountId));
+      if (!account) return;
+
+      accountMovements.forEach((movement) => {
+        if (
+          movement.type === "fund_share" &&
+          movement.share_movement_type === "subscription" &&
+          movement.fund_id &&
+          movement.shares_change &&
+          movement.share_price
+        ) {
+          purchases.push({
+            id: movement.id,
+            date: new Date(movement.effective_date),
+            accountNumber: account.account_number,
+            fundId: movement.fund_id,
+            fundName: movement.fund_name || "N/A",
+            shares: Number(movement.shares_change),
+            buyPrice: Number(movement.share_price),
+            currency: movement.currency || "USD",
+          });
+        }
+      });
+    });
+
+    // Sort by date
+    purchases.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return purchases;
+  }, [movements, accounts]);
+
+  // Calculate evolution per month for each purchase
+  const purchaseEvolution = useMemo(() => {
+    if (sharePurchases.length === 0 || fundPerformance.length === 0) return [];
+
+    return sharePurchases.map((purchase) => {
+      const performance = fundPerformance.find((p) => p.fund_id === purchase.fundId);
+      if (!performance || !performance.navs || performance.navs.length === 0) {
+        return {
+          purchase,
+          evolution: [],
+        };
+      }
+
+      // Get NAV data for months since purchase
+      const purchaseDate = new Date(purchase.date);
+      const purchaseYear = purchaseDate.getFullYear();
+      const purchaseMonth = purchaseDate.getMonth();
+
+      // Filter NAVs from purchase month onwards
+      const navsSincePurchase = performance.navs.filter((nav) => {
+        const navDate = new Date(nav.as_of_date);
+        return navDate >= new Date(purchaseYear, purchaseMonth, 1);
+      });
+
+      if (navsSincePurchase.length === 0) {
+        return {
+          purchase,
+          evolution: [],
+        };
+      }
+
+      // Group NAVs by month (one NAV per month)
+      const monthlyNavs = new Map<string, typeof navsSincePurchase[0]>();
+      navsSincePurchase.forEach((nav) => {
+        const navDate = new Date(nav.as_of_date);
+        const monthKey = `${navDate.getFullYear()}-${String(navDate.getMonth() + 1).padStart(2, "0")}`;
+        // Keep the latest NAV for each month
+        if (!monthlyNavs.has(monthKey)) {
+          monthlyNavs.set(monthKey, nav);
+        } else {
+          const existing = monthlyNavs.get(monthKey)!;
+          const existingDate = new Date(existing.as_of_date);
+          if (navDate > existingDate) {
+            monthlyNavs.set(monthKey, nav);
+          }
+        }
+      });
+
+      // Calculate evolution for each month
+      const evolution = Array.from(monthlyNavs.entries())
+        .map(([monthKey, nav]) => {
+          const navDate = new Date(nav.as_of_date);
+          const monthLabel = navDate.toLocaleDateString("es-ES", { month: "short", year: "numeric" });
+          const shareValue = Number(nav.share_value);
+          const value = purchase.shares * shareValue;
+          const totalCost = purchase.shares * purchase.buyPrice;
+          const gain = value - totalCost;
+          const gainPercent = purchase.buyPrice > 0 ? (gain / totalCost) * 100 : 0;
+
+          return {
+            month: monthLabel,
+            monthDate: new Date(navDate.getFullYear(), navDate.getMonth(), 1),
+            shareValue,
+            value,
+            gain,
+            gainPercent,
+          };
+        })
+        .sort((a, b) => a.monthDate.getTime() - b.monthDate.getTime());
+
+      return {
+        purchase,
+        evolution,
+      };
+    });
+  }, [sharePurchases, fundPerformance]);
+
   if (!profile) {
     return (
       <DashboardLayout>
@@ -152,8 +328,10 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Stats Cards */}
-          <section className="mb-8 grid gap-6 lg:grid-cols-3">
+          {/* Section General */}
+          <section className="mb-12">
+            <h2 className="mb-6 text-2xl font-semibold text-slate-900">General</h2>
+            <div className="grid gap-6 lg:grid-cols-3">
             <div className="card p-6">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
                 Balance
@@ -194,13 +372,188 @@ export default function DashboardPage() {
                 Inversión neta acumulada
               </p>
             </div>
+            </div>
           </section>
 
-          {/* Main Content Grid */}
-          <section className="mb-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
+          {/* Section Inversiones */}
+          <section className="mb-12">
+            <h2 className="mb-6 text-2xl font-semibold text-slate-900">Inversiones</h2>
+            <div className="space-y-6">
+              <div className="card border-blue-200 bg-blue-50 p-6">
+                <div className="flex items-center gap-3">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  <p className="text-sm font-medium uppercase tracking-wider text-blue-700">
+                    Exposición a fondos
+                  </p>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {hedgeFunds.length === 0 && (
+                    <p className="text-sm text-blue-700/70">
+                      Aún no hay posiciones en fondos.
+                    </p>
+                  )}
+                  {hedgeFunds.map((position) => (
+                    <div
+                      key={`${position.accountNumber}-${position.fund_id}`}
+                      className="rounded-lg border border-blue-200 bg-white p-3"
+                    >
+                      <p className="text-sm text-blue-700/80">
+                        {position.accountNumber} · {position.fund_name}
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-blue-900">
+                        {numberFormat.format(Number(position.total_shares))} participaciones
+                      </p>
+                      {position.latest_share_value && (
+                        <p className="mt-1 text-xs text-blue-700/70">
+                          Valor cuota: {numberFormat.format(Number(position.latest_share_value))} ·{" "}
+                          {position.currency}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card border-slate-200 bg-white p-6">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="h-5 w-5 text-slate-900" />
+                  <p className="text-sm font-medium uppercase tracking-wider text-slate-900">
+                    Participaciones y Evolución
+                  </p>
+                </div>
+                <div className="mt-4 space-y-4">
+                  {performanceLoading ? (
+                    <p className="text-sm text-slate-600">Cargando evolución...</p>
+                  ) : sharePurchases.length === 0 ? (
+                    <p className="text-sm text-slate-600">
+                      Aún no hay compras de participaciones registradas.
+                    </p>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Share purchases at buy time */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                          Participaciones al momento de compra
+                        </h3>
+                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                          <table className="min-w-full text-xs">
+                            <thead className="bg-slate-50 text-left text-slate-700">
+                              <tr>
+                                <th className="px-3 py-2 font-medium">Fecha</th>
+                                <th className="px-3 py-2 font-medium">Fondo</th>
+                                <th className="px-3 py-2 font-medium text-right">Participaciones</th>
+                                <th className="px-3 py-2 font-medium text-right">Precio compra</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {sharePurchases.map((purchase) => (
+                                <tr
+                                  key={purchase.id}
+                                  className="border-t border-slate-100 text-slate-900"
+                                >
+                                  <td className="px-3 py-2">
+                                    {dateFormat.format(purchase.date)}
+                                  </td>
+                                  <td className="px-3 py-2 font-medium">
+                                    {purchase.fundName}
+                                  </td>
+                                  <td className="px-3 py-2 text-right">
+                                    {numberFormat.format(purchase.shares)}
+                                  </td>
+                                  <td className="px-3 py-2 text-right">
+                                    {currency.format(purchase.buyPrice)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Monthly evolution per purchase */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                          Evolución mensual
+                        </h3>
+                        <div className="space-y-6">
+                          {purchaseEvolution.map((item, idx) => {
+                            if (item.evolution.length === 0) return null;
+                            
+                            return (
+                              <div key={idx} className="space-y-2">
+                                <p className="text-xs font-semibold text-slate-900">
+                                  {item.purchase.fundName} - Comprado el {dateFormat.format(item.purchase.date)}
+                                </p>
+                                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                                  <table className="min-w-full text-xs">
+                                    <thead className="bg-slate-50 text-left text-slate-700">
+                                      <tr>
+                                        <th className="px-3 py-2 font-medium">Mes</th>
+                                        <th className="px-3 py-2 font-medium text-right">Valor cuota</th>
+                                        <th className="px-3 py-2 font-medium text-right">Valor total</th>
+                                        <th className="px-3 py-2 font-medium text-right">Ganancia/Pérdida</th>
+                                        <th className="px-3 py-2 font-medium text-right">%</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {item.evolution.map((month, monthIdx) => (
+                                        <tr
+                                          key={monthIdx}
+                                          className="border-t border-slate-100 text-slate-900"
+                                        >
+                                          <td className="px-3 py-2 font-medium">
+                                            {month.month}
+                                          </td>
+                                          <td className="px-3 py-2 text-right">
+                                            {currency.format(month.shareValue)}
+                                          </td>
+                                          <td className="px-3 py-2 text-right">
+                                            {currency.format(month.value)}
+                                          </td>
+                                          <td
+                                            className={`px-3 py-2 text-right font-medium ${
+                                              month.gain >= 0 ? "text-green-600" : "text-red-600"
+                                            }`}
+                                          >
+                                            {month.gain >= 0 ? "+" : ""}
+                                            {currency.format(month.gain)}
+                                          </td>
+                                          <td
+                                            className={`px-3 py-2 text-right font-medium ${
+                                              month.gainPercent >= 0 ? "text-green-600" : "text-red-600"
+                                            }`}
+                                          >
+                                            {month.gainPercent >= 0 ? "+" : ""}
+                                            {numberFormat.format(month.gainPercent)}%
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {purchaseEvolution.every((item) => item.evolution.length === 0) && (
+                            <p className="text-xs text-slate-600">
+                              No hay datos de evolución disponibles.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section Detalles */}
+          <section className="mb-8">
+            <h2 className="mb-6 text-2xl font-semibold text-slate-900">Detalles</h2>
             <div className="card p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold text-slate-900">Movimientos</h2>
+                <h3 className="text-xl font-semibold text-slate-900">Movimientos</h3>
                 {movementsLoading && (
                   <span className="text-sm text-slate-500">Actualizando…</span>
                 )}
@@ -278,43 +631,6 @@ export default function DashboardPage() {
                 Aún no se han asignado cuentas.
               </div>
             )}
-            </div>
-
-            <div className="space-y-6">
-              <div className="card border-blue-200 bg-blue-50 p-6">
-                <div className="flex items-center gap-3">
-                  <Activity className="h-5 w-5 text-blue-600" />
-                  <p className="text-sm font-medium uppercase tracking-wider text-blue-700">
-                    Exposición a fondos
-                  </p>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {hedgeFunds.length === 0 && (
-                    <p className="text-sm text-blue-700/70">
-                      Aún no hay posiciones en fondos.
-                    </p>
-                  )}
-                  {hedgeFunds.map((position) => (
-                    <div
-                      key={`${position.accountNumber}-${position.fund_id}`}
-                      className="rounded-lg border border-blue-200 bg-white p-3"
-                    >
-                      <p className="text-sm text-blue-700/80">
-                        {position.accountNumber} · {position.fund_name}
-                      </p>
-                      <p className="mt-1 text-lg font-semibold text-blue-900">
-                        {numberFormat.format(Number(position.total_shares))} participaciones
-                      </p>
-                      {position.latest_share_value && (
-                        <p className="mt-1 text-xs text-blue-700/70">
-                          Valor cuota: {numberFormat.format(Number(position.latest_share_value))} ·{" "}
-                          {position.currency}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </section>
         </div>
