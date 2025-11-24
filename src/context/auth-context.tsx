@@ -17,6 +17,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
 
 type AuthContextValue = {
@@ -272,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Update Firebase display name if provided
       if (fullName && userCredential.user) {
         try {
-          await userCredential.user.updateProfile({ displayName: fullName });
+          await updateProfile(userCredential.user, { displayName: fullName });
         } catch (err) {
           console.warn("Failed to update display name:", err);
         }
