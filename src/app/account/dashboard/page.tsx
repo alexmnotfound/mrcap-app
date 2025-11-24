@@ -386,7 +386,7 @@ export default function DashboardPage() {
           {/* Section General */}
           <section className="mb-12">
             <h2 className="mb-6 text-2xl font-semibold text-slate-900">General</h2>
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-4">
             <div className="card p-6">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
                 Balance
@@ -427,6 +427,40 @@ export default function DashboardPage() {
                 Inversión neta acumulada
               </p>
             </div>
+            <div className="card border-blue-200 bg-blue-50 p-6">
+              <div className="flex items-center gap-3">
+                <Activity className="h-5 w-5 text-blue-600" />
+                <p className="text-sm font-medium uppercase tracking-wider text-blue-700">
+                  Exposición a fondos
+                </p>
+              </div>
+              <div className="mt-4 space-y-3">
+                {hedgeFunds.length === 0 && (
+                  <p className="text-sm text-blue-700/70">
+                    Aún no hay posiciones en fondos.
+                  </p>
+                )}
+                {hedgeFunds.map((position) => (
+                  <div
+                    key={`${position.accountNumber}-${position.fund_id}`}
+                    className="rounded-lg border border-blue-200 bg-white p-3"
+                  >
+                    <p className="text-sm text-blue-700/80">
+                      {position.accountNumber} · {position.fund_name}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-blue-900">
+                      {numberFormat.format(Number(position.total_shares))} participaciones
+                    </p>
+                    {position.latest_share_value && (
+                      <p className="mt-1 text-xs text-blue-700/70">
+                        Valor cuota: {numberFormat.format(Number(position.latest_share_value))} ·{" "}
+                        {position.currency}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
             </div>
           </section>
 
@@ -434,41 +468,6 @@ export default function DashboardPage() {
           <section className="mb-12">
             <h2 className="mb-6 text-2xl font-semibold text-slate-900">Inversiones</h2>
             <div className="space-y-6">
-              <div className="card border-blue-200 bg-blue-50 p-6">
-                <div className="flex items-center gap-3">
-                  <Activity className="h-5 w-5 text-blue-600" />
-                  <p className="text-sm font-medium uppercase tracking-wider text-blue-700">
-                    Exposición a fondos
-                  </p>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {hedgeFunds.length === 0 && (
-                    <p className="text-sm text-blue-700/70">
-                      Aún no hay posiciones en fondos.
-                    </p>
-                  )}
-                  {hedgeFunds.map((position) => (
-                    <div
-                      key={`${position.accountNumber}-${position.fund_id}`}
-                      className="rounded-lg border border-blue-200 bg-white p-3"
-                    >
-                      <p className="text-sm text-blue-700/80">
-                        {position.accountNumber} · {position.fund_name}
-                      </p>
-                      <p className="mt-1 text-lg font-semibold text-blue-900">
-                        {numberFormat.format(Number(position.total_shares))} participaciones
-                      </p>
-                      {position.latest_share_value && (
-                        <p className="mt-1 text-xs text-blue-700/70">
-                          Valor cuota: {numberFormat.format(Number(position.latest_share_value))} ·{" "}
-                          {position.currency}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div className="card border-slate-200 bg-white p-6">
                 <div className="flex items-center gap-3">
                   <TrendingUp className="h-5 w-5 text-slate-900" />
