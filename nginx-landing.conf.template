@@ -13,6 +13,12 @@ server {
     # Redirect HTTP to HTTPS (uncomment after SSL is configured)
     # return 301 https://$server_name$request_uri;
 
+    # Allow Let's Encrypt ACME challenge (must be before other location blocks)
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        try_files $uri =404;
+    }
+
     # Proxy to Next.js app for landing page only
     # Only serve the root route (/) - redirect everything else to app subdomain
     location = / {
