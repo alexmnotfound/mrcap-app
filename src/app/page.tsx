@@ -14,15 +14,15 @@ import {
 
 const metrics = [
   { label: "Fondos de Inversión", value: "1" },
-  { label: "Bots de Trading", value: "2 en proceso" },
   { label: "Ganancias Promedio", value: "3% mensual" },
+  { label: "Bots de Trading", value: "en proceso" },
 ];
 
 const features = [
   {
     title: "Fondos de Inversión",
     description:
-      "Accedé a una gestión transparente y dinámica de tus participaciones. Visualizá en tiempo real los movimientos de tu fondo y los rendimientos histórico. Todo desde una plataforma diseñada para evolucionar junto a tus inversiones.",
+      "Accedé a una gestión transparente y dinámica de tus participaciones. Visualizá en tiempo real los movimientos de tu fondo y los rendimientos históricos. Todo desde una plataforma diseñada para evolucionar junto a tus inversiones.",
     icon: LayoutDashboard,
   },
   {
@@ -34,7 +34,7 @@ const features = [
   {
     title: "Bots de Trading",
     description:
-      "Explorá la nueva frontera del trading automatizado. Nuestros prototipos de bots combinan análisis cuantitativo y ejecución algorítmica para operar con precisión y consistencia. Flujos discrecionales y sistemáticos conviven sobre la misma infraestructura, optimizando resultados sin fricción.",
+      "Explorá la nueva frontera del trading automatizado. Nuestros bots combinan análisis y ejecución automática para no tener que estarle encima al mercado. Utilizan las mismas estrategias que nuestros analistas pero con mayor precisión.",
     icon: Bot,
   },
 ];
@@ -89,8 +89,7 @@ export default function Home() {
                 Tu trading simple e inteligente.
               </h1>
               <p className="text-lg text-slate-600 lg:text-xl">
-              Accedé a un entorno de inversión intuitivo y potente, con alertas en tiempo real 
-              e integración de bots algorítmicos que ejecutan estrategias con precisión.
+              Accedé a un entorno de inversión intuitivo y potente, y hacé la plancha mientras tu dinero crece.
               </p>
             </div>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -135,16 +134,18 @@ export default function Home() {
                 Un ecosistema que crece con vos.
                 </h2>
                 <p className="text-lg text-slate-600">
-                Comenzá con tu fondo en vivo y descubrí cómo cada módulo amplía tus posibilidades.
-                Pensado para evolucionar con tus inversiones.
+                Comenzá con tu subscripción al FCI y descubrí como tu dinero crece.
+                Pensado para evolucionar junto a tus inversiones.
                 </p>
                 <div className="flex flex-wrap gap-4">
+                  {/* TODO Add Roadmap and demo
                   <button className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-200">
                     Ver roadmap
                   </button>
                   <button className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600">
                     Ver demo
                   </button>
+                  */}
                 </div>
               </div>
               <div className="relative rounded-[32px] border border-blue-100 bg-gradient-to-b from-white to-blue-50 p-6 shadow-[0_40px_120px_rgba(37,99,235,0.15)]">
@@ -154,7 +155,7 @@ export default function Home() {
                     Plataforma
                   </p>
                   <p className="mt-2 text-sm text-slate-500">
-                    Visualizá tus participaciones, fondos de inversión y perfil.
+                    Visualizá tus participaciones y fondos de inversión en tiempo real.
                     Accedé a resúmenes y reportes de movimientos.
                   </p>
                   <div className="mt-6 grid gap-4 text-sm">
