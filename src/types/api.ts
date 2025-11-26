@@ -28,6 +28,7 @@ export interface FundPosition {
 export interface AccountSummary {
   account_id: number;
   account_number: string;
+  commission_rate: string;
   total_deposits: string;
   total_withdrawals: string;
   total_fees: string;

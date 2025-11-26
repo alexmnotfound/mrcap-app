@@ -145,6 +145,17 @@ export default function DashboardPage() {
     };
   }, [accounts, apiBase, profile, token]);
 
+  // Debug: Log accounts data to verify commission_rate
+  useEffect(() => {
+    if (accounts.length > 0) {
+      console.log("[Dashboard] Accounts data:", accounts.map(acc => ({
+        account_id: acc.account_id,
+        account_number: acc.account_number,
+        commission_rate: acc.commission_rate,
+      })));
+    }
+  }, [accounts]);
+
   const hedgeFunds = useMemo(() => {
     return accounts.flatMap((account) =>
       account.positions.map((position) => ({
@@ -154,12 +165,17 @@ export default function DashboardPage() {
     );
   }, [accounts]);
 
-  // Get commission rate for an account (15% or 20%)
-  // TODO: This should come from the database - accounts table needs a commission_rate field
+  // Get commission rate for an account from the account data
   const getCommissionRate = (accountNumber: string): number => {
-    // Default to 15%, can be customized based on account_number pattern
-    // Example: if (accountNumber.includes('PREMIUM')) return 0.20;
-    return 0.15; // 15% default
+    const account = accounts.find((acc) => acc.account_number === accountNumber);
+    if (account?.commission_rate) {
+      const rate = Number(account.commission_rate);
+      console.log(`[Commission] Account ${accountNumber}: commission_rate=${account.commission_rate}, parsed=${rate}`);
+      return rate;
+    }
+    console.warn(`[Commission] Account ${accountNumber}: commission_rate not found, defaulting to 0.15`);
+    // Default to 15% if not specified
+    return 0.15;
   };
 
   // Extract share purchases and calculate evolution
