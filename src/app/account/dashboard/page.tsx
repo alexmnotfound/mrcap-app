@@ -242,6 +242,19 @@ export default function DashboardPage() {
 
   // Calculate financial metrics (after sharePurchasesWithMetrics is calculated)
   const financialMetrics = useMemo(() => {
+    // Wait for sharePurchasesWithMetrics to be calculated if we have purchases
+    // This ensures commissions are included in the calculations
+    const hasPurchases = sharePurchases.length > 0;
+    const metricsReady = !hasPurchases || sharePurchasesWithMetrics.length > 0;
+    
+    if (!metricsReady) {
+      return {
+        balance: null,
+        gains: null,
+        totalInvested: 0,
+      };
+    }
+
     let totalBalance = 0;
     let totalInvested = 0;
 
@@ -276,7 +289,7 @@ export default function DashboardPage() {
       gains: netGains,
       totalInvested: totalInvested,
     };
-  }, [accounts, sharePurchasesWithMetrics]);
+  }, [accounts, sharePurchasesWithMetrics, sharePurchases]);
 
   // Calculate evolution per month for each purchase
   const purchaseEvolution = useMemo(() => {
@@ -392,7 +405,9 @@ export default function DashboardPage() {
                 Balance
               </p>
               <p className="mt-3 text-4xl font-semibold text-slate-900">
-                {currency.format(financialMetrics.balance)}
+                {financialMetrics.balance !== null
+                  ? currency.format(financialMetrics.balance)
+                  : "—"}
               </p>
               <p className="mt-1 text-sm text-slate-600">
                 Valor total de tu portafolio
@@ -404,16 +419,29 @@ export default function DashboardPage() {
               </p>
               <p
                 className={`mt-3 text-4xl font-semibold ${
-                  financialMetrics.gains >= 0
+                  financialMetrics.gains === null
+                    ? "text-slate-900"
+                    : financialMetrics.gains >= 0
                     ? "text-green-600"
                     : "text-red-600"
                 }`}
               >
-                {financialMetrics.gains >= 0 ? "+" : ""}
-                {currency.format(financialMetrics.gains)}
+                {financialMetrics.gains !== null ? (
+                  <>
+                    {financialMetrics.gains >= 0 ? "+" : ""}
+                    {currency.format(financialMetrics.gains)}
+                  </>
+                ) : (
+                  "—"
+                )}
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                {financialMetrics.gains >= 0 ? "Ganancia" : "Pérdida"} total
+                {financialMetrics.gains !== null
+                  ? financialMetrics.gains >= 0
+                    ? "Ganancia"
+                    : "Pérdida"
+                  : ""}{" "}
+                total
               </p>
             </div>
             <div className="card p-6">
@@ -533,10 +561,10 @@ export default function DashboardPage() {
                                       {purchase.earnings >= 0 ? "+" : ""}
                                       {currency.format(purchase.earnings)}
                                     </td>
-                                    <td className="px-3 py-2 text-right">
+                                    <td className="px-3 py-2 text-right font-medium text-red-500">
                                       {currency.format(purchase.commission)}
                                     </td>
-                                    <td className="px-3 py-2 text-right font-semibold">
+                                    <td className="px-3 py-2 text-right font-semibold text-green-600">
                                       {currency.format(purchase.finalAmount)}
                                     </td>
                                   </tr>
