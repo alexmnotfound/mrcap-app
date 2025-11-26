@@ -46,6 +46,8 @@ export default function FundDetailPage() {
   const [performance, setPerformance] = useState<FundPerformance | null>(null);
   const [performanceLoading, setPerformanceLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Time period filter for chart - moved to top with other hooks
+  const [timePeriod, setTimePeriod] = useState<"3M" | "6M" | "1Y" | "ALL">("ALL");
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -91,38 +93,7 @@ export default function FundDetailPage() {
     };
   }, [profile, token, apiBase, fundId]);
 
-  if (!profile) {
-    return (
-      <DashboardLayout>
-        <div className="flex min-h-screen items-center justify-center">
-          <p className="text-slate-600">
-            {loading ? "Cargando..." : "Redirigiendo al inicio de sesión..."}
-          </p>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!fundId) {
-    return (
-      <DashboardLayout>
-        <div className="p-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="card p-12 text-center">
-              <p className="text-slate-600">ID de fondo inválido</p>
-              <Link
-                href="/account/funds"
-                className="mt-4 inline-block text-blue-600 hover:text-blue-700"
-              >
-                Volver a Fondos
-              </Link>
-            </div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
+  // All computed values and useMemo hooks must be before early returns
   const navData = performance?.navs || [];
   const hasNavData = navData.length > 0;
   const latestNav = performance?.latest_share_value
@@ -152,9 +123,6 @@ export default function FundDetailPage() {
     return sum / deltas.length;
   }, [navData, hasNavData]);
 
-  // Time period filter for chart
-  const [timePeriod, setTimePeriod] = useState<"1M" | "3M" | "6M" | "1Y" | "ALL">("ALL");
-
   // Filtered chart data based on time period
   const chartData = useMemo(() => {
     if (!hasNavData) return [];
@@ -163,9 +131,6 @@ export default function FundDetailPage() {
     let cutoffDate = new Date();
     
     switch (timePeriod) {
-      case "1M":
-        cutoffDate.setMonth(now.getMonth() - 1);
-        break;
       case "3M":
         cutoffDate.setMonth(now.getMonth() - 3);
         break;
@@ -214,6 +179,39 @@ export default function FundDetailPage() {
     const sum = deltas.reduce((acc, val) => acc + val, 0);
     return sum / deltas.length;
   }, [chartData]);
+
+  // Early returns AFTER all hooks are called
+  if (!profile) {
+    return (
+      <DashboardLayout>
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-slate-600">
+            {loading ? "Cargando..." : "Redirigiendo al inicio de sesión..."}
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!fundId) {
+    return (
+      <DashboardLayout>
+        <div className="p-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="card p-12 text-center">
+              <p className="text-slate-600">ID de fondo inválido</p>
+              <Link
+                href="/account/funds"
+                className="mt-4 inline-block text-blue-600 hover:text-blue-700"
+              >
+                Volver a Fondos
+              </Link>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -345,7 +343,7 @@ export default function FundDetailPage() {
                         </h2>
                       </div>
                       <div className="flex gap-2">
-                        {(["1M", "3M", "6M", "1Y", "ALL"] as const).map((period) => (
+                        {(["3M", "6M", "1Y", "ALL"] as const).map((period) => (
                           <button
                             key={period}
                             onClick={() => setTimePeriod(period)}
@@ -427,7 +425,7 @@ export default function FundDetailPage() {
                         </h2>
                       </div>
                       <div className="flex gap-2">
-                        {(["1M", "3M", "6M", "1Y", "ALL"] as const).map((period) => (
+                        {(["3M", "6M", "1Y", "ALL"] as const).map((period) => (
                           <button
                             key={period}
                             onClick={() => setTimePeriod(period)}
