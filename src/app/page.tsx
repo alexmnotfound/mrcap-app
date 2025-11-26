@@ -39,127 +39,7 @@ const features = [
   },
 ];
 
-function NavLinks() {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const navRef = useRef<HTMLDivElement>(null);
-
-  const inversionesItems = [
-    { href: "#investor-profile", label: "Perfil del Inversor" },
-    { href: "#hedge-fund", label: "Fondos de Inversión" },
-  ];
-
-  const herramientasItems = [
-    { href: "#finanzas", label: "Planilla Finanzas Personales" },
-    { href: "#backtester", label: "Backtester" },
-  ];
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
-    }
-
-    if (openDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [openDropdown]);
-
-  return (
-    <div
-      ref={navRef}
-      className="hidden items-center gap-1 text-sm font-medium text-slate-600 lg:flex"
-    >
-      {/* Inversiones Dropdown */}
-      <div className="relative">
-        <button
-          onClick={() =>
-            setOpenDropdown(openDropdown === "inversiones" ? null : "inversiones")
-          }
-          className="flex items-center gap-1 rounded-lg px-4 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-        >
-          Inversiones
-          <ChevronDown
-            className={`h-4 w-4 transition-transform ${
-              openDropdown === "inversiones" ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-        {openDropdown === "inversiones" && (
-          <div className="absolute left-0 top-full z-50 mt-1 w-56 rounded-lg border border-slate-200 bg-white shadow-lg">
-            <div className="py-1">
-              {inversionesItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                  onClick={() => setOpenDropdown(null)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Herramientas Dropdown */}
-      <div className="relative">
-        <button
-          onClick={() =>
-            setOpenDropdown(
-              openDropdown === "herramientas" ? null : "herramientas"
-            )
-          }
-          className="flex items-center gap-1 rounded-lg px-4 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-        >
-          Herramientas
-          <ChevronDown
-            className={`h-4 w-4 transition-transform ${
-              openDropdown === "herramientas" ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-        {openDropdown === "herramientas" && (
-          <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-lg border border-slate-200 bg-white shadow-lg">
-            <div className="py-1">
-              {herramientasItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                  onClick={() => setOpenDropdown(null)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Nosotros Link */}
-      <Link
-        href="#about"
-        className="rounded-lg px-4 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-      >
-        Nosotros
-      </Link>
-
-      {/* FAQ Link */}
-      <Link
-        href="#faq"
-        className="rounded-lg px-4 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-      >
-        FAQ
-      </Link>
-    </div>
-  );
-}
+/*TODO: Add Nav Links */
 
 export default function Home() {
   return (
@@ -177,7 +57,7 @@ export default function Home() {
               priority
             />
           </Link>
-          <NavLinks />
+          {/* TODO Add <NavLinks />*/}
           <div className="flex items-center gap-3 text-sm font-semibold">
             <Link
               href="/login"
