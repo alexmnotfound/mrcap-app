@@ -8,6 +8,7 @@ import {
   DollarSign,
   BarChart3,
   LineChart,
+  PieChart as PieChartIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -335,9 +336,10 @@ export default function FundDetailPage() {
 
               {/* Evolution Charts */}
               {hasNavData && chartData.length > 0 && (
-                <div className="mb-8 grid gap-6 md:grid-cols-2">
-                  {/* Delta Since Origin Chart */}
-                  <div className="card p-6">
+                <>
+                  {/* Delta Since Origin Chart - Main Card */}
+                  <div className="mb-8">
+                    <div className="card p-6">
                     <div className="mb-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <LineChart className="h-5 w-5 text-green-600" />
@@ -434,9 +436,71 @@ export default function FundDetailPage() {
                       </ResponsiveContainer>
                     </div>
                   </div>
+                  </div>
 
-                  {/* Delta vs Previous Month Chart */}
-                  <div className="card p-6">
+                  {/* Distribution and Monthly Delta - Side by Side */}
+                  <div className="mb-8 grid gap-6 md:grid-cols-2">
+                    {/* Fund Allocation */}
+                    <div className="card p-6">
+                      <div className="mb-6 flex items-center gap-3">
+                        <PieChartIcon className="h-5 w-5 text-indigo-600" />
+                        <h2 className="text-xl font-semibold text-slate-900">
+                          Distribución del Fondo
+                        </h2>
+                      </div>
+                      <div className="space-y-4">
+                        {(() => {
+                          const fundTotal = hasNavData && navData[navData.length - 1]?.fund_accumulated
+                            ? Number(navData[navData.length - 1].fund_accumulated)
+                            : 0;
+                          
+                          return [
+                            { name: "Crypto", percentage: 30, color: "#8b5cf6" },
+                            { name: "Stocks", percentage: 20, color: "#3b82f6" },
+                            { name: "Index", percentage: 20, color: "#10b981" },
+                            { name: "Earn", percentage: 10, color: "#f59e0b" },
+                            { name: "Liquid", percentage: 10, color: "#6366f1" },
+                          ].map((item) => {
+                            const numericValue = (fundTotal * item.percentage) / 100;
+                            return (
+                              <div key={item.name} className="flex items-center gap-3">
+                                <div
+                                  className="h-4 w-4 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-slate-900">
+                                      {item.name}
+                                    </span>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-sm font-semibold text-slate-700">
+                                        {currency.format(numericValue)}
+                                      </span>
+                                      <span className="text-sm font-semibold text-slate-500">
+                                        {item.percentage}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="mt-1 h-2 w-full rounded-full bg-slate-100">
+                                    <div
+                                      className="h-2 rounded-full transition-all"
+                                      style={{
+                                        width: `${item.percentage}%`,
+                                        backgroundColor: item.color,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Delta vs Previous Month Chart */}
+                    <div className="card p-6">
                     <div className="mb-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <LineChart className="h-5 w-5 text-blue-600" />
@@ -549,7 +613,8 @@ export default function FundDetailPage() {
                       </ResponsiveContainer>
                     </div>
                   </div>
-                </div>
+                  </div>
+                </>
               )}
 
               {/* NAV History Table */}
