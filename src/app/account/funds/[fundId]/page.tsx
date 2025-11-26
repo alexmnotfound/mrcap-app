@@ -149,23 +149,26 @@ export default function FundDetailPage() {
       .filter((nav) => new Date(nav.as_of_date) >= cutoffDate)
       .sort((a, b) => new Date(a.as_of_date).getTime() - new Date(b.as_of_date).getTime());
 
-    return filtered.map((nav, index) => ({
-      index: index,
-      date: new Date(nav.as_of_date).toLocaleDateString("es-ES", {
-        month: "short",
-        day: "numeric",
-      }),
-      fullDate: nav.as_of_date,
-      dateLabel: new Date(nav.as_of_date).toLocaleDateString("es-ES", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      shareValue: Number(nav.share_value),
-      fundAccumulated: Number(nav.fund_accumulated),
-      deltaPrevious: nav.delta_previous ? Number(nav.delta_previous) : null,
-      deltaSinceOrigin: nav.delta_since_origin ? Number(nav.delta_since_origin) : null,
-    }));
+    return filtered.map((nav) => {
+      const navDate = new Date(nav.as_of_date);
+      return {
+        date: navDate.getTime(), // Use timestamp for proper numeric scale
+        dateString: navDate.toLocaleDateString("es-ES", {
+          month: "short",
+          day: "numeric",
+        }),
+        fullDate: nav.as_of_date,
+        dateLabel: navDate.toLocaleDateString("es-ES", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        shareValue: Number(nav.share_value),
+        fundAccumulated: Number(nav.fund_accumulated),
+        deltaPrevious: nav.delta_previous ? Number(nav.delta_previous) : null,
+        deltaSinceOrigin: nav.delta_since_origin ? Number(nav.delta_since_origin) : null,
+      };
+    });
   }, [navData, hasNavData, timePeriod]);
 
   // Average delta previous for the filtered chart data
@@ -366,13 +369,22 @@ export default function FundDetailPage() {
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                           <XAxis
-                            dataKey="index"
+                            dataKey="date"
+                            type="number"
+                            scale="linear"
+                            domain={['dataMin', 'dataMax']}
                             stroke="#64748b"
                             style={{ fontSize: "12px" }}
-                            tickFormatter={(value, index) => {
-                              const dataPoint = chartData[index];
-                              return dataPoint ? dataPoint.date : "";
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return date.toLocaleDateString("es-ES", {
+                                month: "short",
+                                day: "numeric",
+                              });
                             }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
                           />
                           <YAxis
                             stroke="#64748b"
@@ -389,6 +401,14 @@ export default function FundDetailPage() {
                               if (payload && payload.length > 0) {
                                 const dataPoint = payload[0].payload;
                                 return dataPoint ? dataPoint.dateLabel : label;
+                              }
+                              if (label) {
+                                const date = new Date(label);
+                                return date.toLocaleDateString("es-ES", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                });
                               }
                               return label;
                             }}
@@ -448,13 +468,22 @@ export default function FundDetailPage() {
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                           <XAxis
-                            dataKey="index"
+                            dataKey="date"
+                            type="number"
+                            scale="linear"
+                            domain={['dataMin', 'dataMax']}
                             stroke="#64748b"
                             style={{ fontSize: "12px" }}
-                            tickFormatter={(value, index) => {
-                              const dataPoint = chartData[index];
-                              return dataPoint ? dataPoint.date : "";
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return date.toLocaleDateString("es-ES", {
+                                month: "short",
+                                day: "numeric",
+                              });
                             }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
                           />
                           <YAxis
                             stroke="#64748b"
@@ -471,6 +500,14 @@ export default function FundDetailPage() {
                               if (payload && payload.length > 0) {
                                 const dataPoint = payload[0].payload;
                                 return dataPoint ? dataPoint.dateLabel : label;
+                              }
+                              if (label) {
+                                const date = new Date(label);
+                                return date.toLocaleDateString("es-ES", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                });
                               }
                               return label;
                             }}
