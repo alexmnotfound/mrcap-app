@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
+import { Activity, TrendingUp, ChevronDown, ChevronRight, LineChart } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { apiFetch } from "@/lib/api";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -10,6 +10,16 @@ import type {
   UserMovement,
   FundPerformance,
 } from "@/types/api";
+import {
+  LineChart as RechartsLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 type MovementsMap = Record<number, UserMovement[]>;
 
@@ -47,6 +57,7 @@ export default function DashboardPage() {
   const [fundPerformance, setFundPerformance] = useState<FundPerformance[]>([]);
   const [performanceLoading, setPerformanceLoading] = useState(false);
   const [expandedPurchases, setExpandedPurchases] = useState<Set<number>>(new Set());
+  const [showAllMonths, setShowAllMonths] = useState(false);
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -368,6 +379,7 @@ export default function DashboardPage() {
 
           return {
             month: monthLabel,
+            monthKey,
             monthDate: new Date(navDate.getFullYear(), navDate.getMonth(), 1),
             shareValue,
             value,
@@ -383,6 +395,90 @@ export default function DashboardPage() {
       };
     });
   }, [sharePurchases, fundPerformance]);
+
+  // Calculate aggregated monthly P&L evolution
+  const monthlyPnL = useMemo(() => {
+    if (purchaseEvolution.length === 0) return [];
+
+    // Get all unique months across all purchases
+    const allMonths = new Set<string>();
+    const monthToDate = new Map<string, Date>();
+    const monthToLabel = new Map<string, string>();
+
+    purchaseEvolution.forEach(({ evolution }) => {
+      evolution.forEach((monthData) => {
+        allMonths.add(monthData.monthKey);
+        if (!monthToDate.has(monthData.monthKey)) {
+          monthToDate.set(monthData.monthKey, monthData.monthDate);
+          monthToLabel.set(monthData.monthKey, monthData.month);
+        }
+      });
+    });
+
+    // For each month, aggregate data from all purchases that existed by that month
+    const monthlyData = Array.from(allMonths)
+      .map((monthKey) => {
+        const monthDate = monthToDate.get(monthKey)!;
+        let totalInvested = 0;
+        let totalValue = 0;
+        let totalCommissions = 0;
+
+        purchaseEvolution.forEach(({ purchase, evolution }) => {
+          // Check if this purchase existed by this month
+          const purchaseDate = new Date(purchase.date);
+          const purchaseMonthKey = `${purchaseDate.getFullYear()}-${String(purchaseDate.getMonth() + 1).padStart(2, "0")}`;
+          
+          // Only include purchases that were made on or before this month
+          if (purchaseMonthKey <= monthKey) {
+            const purchaseWithMetrics = sharePurchasesWithMetrics.find((p) => p.id === purchase.id);
+            if (!purchaseWithMetrics) return;
+
+            // Find the evolution data for this month
+            const monthEvolution = evolution.find((e) => e.monthKey === monthKey);
+            if (monthEvolution) {
+              totalInvested += purchaseWithMetrics.totalAmount;
+              totalValue += monthEvolution.value;
+              
+              // Calculate commission for this month based on this month's gain
+              const monthGain = monthEvolution.gain;
+              const commissionRate = getCommissionRate(purchase.accountNumber);
+              const monthCommission = monthGain > 0 ? monthGain * commissionRate : 0;
+              totalCommissions += monthCommission;
+            }
+          }
+        });
+
+        const totalGains = totalValue - totalInvested;
+        const netPnL = totalGains - totalCommissions;
+
+        return {
+          month: monthToLabel.get(monthKey)!,
+          monthKey,
+          monthDate,
+          totalInvested,
+          totalValue,
+          totalGains,
+          totalCommissions,
+          netPnL,
+        };
+      })
+      .sort((a, b) => b.monthDate.getTime() - a.monthDate.getTime()); // DESC: most recent first
+
+    return monthlyData;
+  }, [purchaseEvolution, sharePurchasesWithMetrics, accounts]);
+
+  // Chart data in ascending order (oldest to newest)
+  const chartMonthlyPnL = useMemo(() => {
+    return [...monthlyPnL].sort((a, b) => a.monthDate.getTime() - b.monthDate.getTime());
+  }, [monthlyPnL]);
+
+  // Display only last 6 months initially, or all if showAllMonths is true (table is DESC)
+  const displayedMonthlyPnL = useMemo(() => {
+    if (showAllMonths) {
+      return monthlyPnL;
+    }
+    return monthlyPnL.slice(0, 6);
+  }, [monthlyPnL, showAllMonths]);
 
   if (!profile) {
     return (
@@ -439,7 +535,7 @@ export default function DashboardPage() {
                     ? "text-slate-900"
                     : financialMetrics.gains >= 0
                     ? "text-green-600"
-                    : "text-red-600"
+                    : "text-red-400"
                 }`}
               >
                 {financialMetrics.gains !== null ? (
@@ -508,6 +604,122 @@ export default function DashboardPage() {
             </div>
           </section>
 
+          {/* Section Evolución General */}
+          <section className="mb-12">
+            <h2 className="mb-6 text-2xl font-semibold text-slate-900">Evolución General</h2>
+            <div className="card border-slate-200 bg-white p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <LineChart className="h-5 w-5 text-slate-900" />
+                <p className="text-sm font-medium uppercase tracking-wider text-slate-900">
+                  Ganancias y Pérdidas Mensuales
+                </p>
+              </div>
+              {performanceLoading || movementsLoading ? (
+                <p className="text-sm text-slate-600">Cargando evolución...</p>
+              ) : monthlyPnL.length === 0 ? (
+                <p className="text-sm text-slate-600">
+                  Aún no hay datos de evolución disponibles.
+                </p>
+              ) : (
+                <div className="space-y-6">
+                  {/* Chart */}
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsLineChart data={chartMonthlyPnL}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis
+                          dataKey="month"
+                          stroke="#64748b"
+                          style={{ fontSize: "12px" }}
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                        />
+                        <YAxis
+                          stroke="#64748b"
+                          style={{ fontSize: "12px" }}
+                          tickFormatter={(value) => currency.format(value)}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => currency.format(value)}
+                          contentStyle={{
+                            backgroundColor: "#fff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                          }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="netPnL"
+                          name="P&L Neto"
+                          stroke="#10b981"
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Table */}
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto">
+                      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                        <table className="min-w-full text-xs">
+                          <thead className="bg-slate-50 text-left text-slate-700">
+                            <tr>
+                              <th className="px-3 py-2 font-medium">Mes</th>
+                              <th className="px-3 py-2 font-medium text-right">Total Invertido</th>
+                              <th className="px-3 py-2 font-medium text-right">Valor Total</th>
+                              <th className="px-3 py-2 font-medium text-right">P&L Neto</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {displayedMonthlyPnL.map((month, idx) => (
+                              <tr
+                                key={idx}
+                                className="border-t border-slate-100 text-slate-900"
+                              >
+                                <td className="px-3 py-2 font-medium">
+                                  {month.month}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {currency.format(month.totalInvested)}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {currency.format(month.totalValue)}
+                                </td>
+                                <td
+                                  className={`px-3 py-2 text-right font-semibold ${
+                                    month.netPnL >= 0 ? "text-green-600" : "text-red-400"
+                                  }`}
+                                >
+                                  {month.netPnL >= 0 ? "+" : ""}
+                                  {currency.format(month.netPnL)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    {monthlyPnL.length > 6 && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => setShowAllMonths(!showAllMonths)}
+                          className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                        >
+                          {showAllMonths ? "Mostrar menos" : `Mostrar más (${monthlyPnL.length - 6} meses más)`}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* Section Inversiones */}
           <section className="mb-12">
             <h2 className="mb-6 text-2xl font-semibold text-slate-900">Inversiones</h2>
@@ -571,13 +783,13 @@ export default function DashboardPage() {
                                     </td>
                                     <td
                                       className={`px-3 py-2 text-right font-medium ${
-                                        purchase.earnings >= 0 ? "text-green-600" : "text-red-600"
+                                        purchase.earnings >= 0 ? "text-green-600" : "text-red-400"
                                       }`}
                                     >
                                       {purchase.earnings >= 0 ? "+" : ""}
                                       {currency.format(purchase.earnings)}
                                     </td>
-                                    <td className="px-3 py-2 text-right font-medium text-red-500">
+                                    <td className="px-3 py-2 text-right font-medium text-red-400">
                                       {currency.format(purchase.commission)}
                                     </td>
                                     <td className="px-3 py-2 text-right font-semibold text-green-600">
@@ -669,7 +881,7 @@ export default function DashboardPage() {
                                             </td>
                                             <td
                                               className={`px-3 py-2 text-right font-medium ${
-                                                month.gain >= 0 ? "text-green-600" : "text-red-600"
+                                                month.gain >= 0 ? "text-green-600" : "text-red-400"
                                               }`}
                                             >
                                               {month.gain >= 0 ? "+" : ""}
@@ -677,7 +889,7 @@ export default function DashboardPage() {
                                             </td>
                                             <td
                                               className={`px-3 py-2 text-right font-medium ${
-                                                month.gainPercent >= 0 ? "text-green-600" : "text-red-600"
+                                                month.gainPercent >= 0 ? "text-green-600" : "text-red-400"
                                               }`}
                                             >
                                               {month.gainPercent >= 0 ? "+" : ""}
