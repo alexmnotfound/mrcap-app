@@ -373,9 +373,10 @@ export default function DashboardPage() {
           const monthLabel = navDate.toLocaleDateString("es-ES", { month: "short", year: "numeric" });
           const shareValue = Number(nav.share_value);
           const value = purchase.shares * shareValue;
-          const totalCost = purchase.shares * purchase.buyPrice;
+          // Use totalAmount (which may include fees) instead of shares * buyPrice to match sharePurchasesWithMetrics
+          const totalCost = purchase.totalAmount;
           const gain = value - totalCost;
-          const gainPercent = purchase.buyPrice > 0 ? (gain / totalCost) * 100 : 0;
+          const gainPercent = totalCost > 0 ? (gain / totalCost) * 100 : 0;
 
           return {
             month: monthLabel,
@@ -439,7 +440,8 @@ export default function DashboardPage() {
               totalInvested += purchaseWithMetrics.totalAmount;
               totalValue += monthEvolution.value;
               
-              // Calculate commission for this month based on this month's gain
+              // Calculate commission for this purchase based on its cumulative gain at this month
+              // This matches the logic in sharePurchasesWithMetrics
               const monthGain = monthEvolution.gain;
               const commissionRate = getCommissionRate(purchase.accountNumber);
               const monthCommission = monthGain > 0 ? monthGain * commissionRate : 0;
