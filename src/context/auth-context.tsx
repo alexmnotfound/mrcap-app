@@ -15,6 +15,8 @@ import { auth, googleAuthProvider } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
   updateProfile,
@@ -133,9 +135,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const savedRaw = window.localStorage.getItem(STORAGE_KEY);
-    const saved = savedRaw ? (JSON.parse(savedRaw) as PersistedState) : null;
-    bootstrap(saved);
+    
+    // Check for redirect result from Google sign-in
+    if (auth) {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user) {
+            // User signed in via redirect
+            result.user.getIdToken().then((idToken) => {
+              login({ token: idToken });
+            });
+          } else {
+            // No redirect result, proceed with normal bootstrap
+            const savedRaw = window.localStorage.getItem(STORAGE_KEY);
+            const saved = savedRaw ? (JSON.parse(savedRaw) as PersistedState) : null;
+            bootstrap(saved);
+          }
+        })
+        .catch((err) => {
+          console.error("Error handling redirect result:", err);
+          // Fallback to normal bootstrap on error
+          const savedRaw = window.localStorage.getItem(STORAGE_KEY);
+          const saved = savedRaw ? (JSON.parse(savedRaw) as PersistedState) : null;
+          bootstrap(saved);
+        });
+    } else {
+      // No auth, proceed with normal bootstrap
+      const savedRaw = window.localStorage.getItem(STORAGE_KEY);
+      const saved = savedRaw ? (JSON.parse(savedRaw) as PersistedState) : null;
+      bootstrap(saved);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -240,7 +269,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const result = await signInWithPopup(auth, googleAuthProvider);
+      // Try popup first, fallback to redirect if popup fails
+      let result;
+      try {
+        result = await signInWithPopup(auth, googleAuthProvider);
+      } catch (popupErr: any) {
+        // If popup is blocked or fails, use redirect
+        if (
+          popupErr.code === "auth/popup-blocked" ||
+          popupErr.code === "auth/popup-closed-by-user" ||
+          popupErr.code === "auth/cancelled-popup-request" ||
+          popupErr.message?.includes("popup")
+        ) {
+          // Use redirect as fallback
+          await signInWithRedirect(auth, googleAuthProvider);
+          // The redirect will navigate away, so we return here
+          return;
+        }
+        throw popupErr;
+      }
+      
       const idToken = await result.user.getIdToken();
       await login({ token: idToken });
     } catch (err: any) {
@@ -249,6 +297,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         errorMessage = "El popup fue cerrado. Por favor intentá de nuevo";
       } else if (err.code === "auth/cancelled-popup-request") {
         errorMessage = "Login cancelado";
+      } else if (err.code === "auth/popup-blocked") {
+        errorMessage = "El popup fue bloqueado. Por favor permití popups para este sitio";
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -315,8 +365,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      // Create Firebase account with Google
-      const result = await signInWithPopup(auth, googleAuthProvider);
+      // Try popup first, fallback to redirect if popup fails
+      let result;
+      try {
+        result = await signInWithPopup(auth, googleAuthProvider);
+      } catch (popupErr: any) {
+        // If popup is blocked or fails, use redirect
+        if (
+          popupErr.code === "auth/popup-blocked" ||
+          popupErr.code === "auth/popup-closed-by-user" ||
+          popupErr.code === "auth/cancelled-popup-request" ||
+          popupErr.message?.includes("popup")
+        ) {
+          // Use redirect as fallback
+          await signInWithRedirect(auth, googleAuthProvider);
+          // The redirect will navigate away, so we return here
+          return;
+        }
+        throw popupErr;
+      }
+      
       const idToken = await result.user.getIdToken();
 
       // Create user in backend
@@ -341,6 +409,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         errorMessage = "El popup fue cerrado. Por favor intentá de nuevo";
       } else if (err.code === "auth/cancelled-popup-request") {
         errorMessage = "Registro cancelado";
+      } else if (err.code === "auth/popup-blocked") {
+        errorMessage = "El popup fue bloqueado. Por favor permití popups para este sitio";
       } else if (err.message) {
         errorMessage = err.message;
       }
