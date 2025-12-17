@@ -68,7 +68,13 @@ export async function apiFetch<T>(
     throw new Error(message);
   }
 
-  // Response is OK, parse JSON
+  // Response is OK, handle based on status code
+  // 204 No Content has no body, return null/undefined
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  // For other successful responses, parse JSON
   try {
     if (!isJson) {
       const text = await response.text();
@@ -79,6 +85,11 @@ export async function apiFetch<T>(
     }
     
     const text = await response.text();
+    // Handle empty response body
+    if (!text || text.trim() === "") {
+      return undefined as T;
+    }
+    
     try {
       return JSON.parse(text) as T;
     } catch (err) {

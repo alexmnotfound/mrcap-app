@@ -93,6 +93,51 @@ export interface FundPerformance {
   navs: FundNavPoint[];
 }
 
+export interface FundNav {
+  id: number;
+  fund_id: number;
+  as_of_date: string;
+  fund_accumulated: string;
+  shares_amount: string;
+  share_value: string;
+  delta_previous?: string | null;
+  delta_since_origin?: string | null;
+  created_at: string;
+}
+
+export interface CashMovement {
+  id: number;
+  account_id: number;
+  type: CashMovementType;
+  amount: string;
+  currency: string;
+  effective_date: string;
+  created_at: string;
+  user_name?: string | null;
+  fund_id?: number | null;
+}
+
+export interface FundShareMovement {
+  id: number;
+  account_id: number;
+  fund_id: number;
+  cash_movement_id?: number | null;
+  type: FundShareMovementType;
+  shares_change: string;
+  share_price: string;
+  total_amount: string;
+  effective_date: string;
+  created_at: string;
+}
+
+export interface FundShareMovementUpdate {
+  fund_id?: number | null;
+  shares_change?: string | null;
+  share_price?: string | null;
+  total_amount?: string | null;
+  effective_date?: string | null;
+}
+
 export interface ApiError {
   detail: string;
 }
