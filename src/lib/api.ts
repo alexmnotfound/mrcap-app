@@ -3,13 +3,20 @@ import type { ApiError } from "@/types/api";
 const DEFAULT_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-type FetchOptions = RequestInit & { token?: string | null; baseUrl?: string };
+type FetchOptions = RequestInit & {
+  token?: string | null;
+  baseUrl?: string;
+  rateLimitMessage?: string;
+};
+
+const RATE_LIMIT_ALERT_COOLDOWN_MS = 10000;
+let lastRateLimitAlertAt = 0;
 
 export async function apiFetch<T>(
   path: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { token, baseUrl, headers, ...rest } = options;
+  const { token, baseUrl, headers, rateLimitMessage, ...rest } = options;
   const url = `${baseUrl ?? DEFAULT_BASE}${path}`;
   
   let response: Response;
@@ -37,6 +44,17 @@ export async function apiFetch<T>(
   let responseText: string | null = null;
 
   if (!response.ok) {
+    if (response.status === 429 && typeof window !== "undefined") {
+      const now = Date.now();
+      if (now - lastRateLimitAlertAt > RATE_LIMIT_ALERT_COOLDOWN_MS) {
+        lastRateLimitAlertAt = now;
+        const retryAfter = response.headers.get("Retry-After");
+        const retryMessage = retryAfter ? ` Intenta de nuevo en ${retryAfter}s.` : "";
+        const message =
+          rateLimitMessage ?? `Estás clickeando demasiado, te voy a pedir que te calmes un ratito..${retryMessage}`;
+        window.alert(message);
+      }
+    }
     let message = `Request failed with status ${response.status}`;
     try {
       const text = await response.text();
