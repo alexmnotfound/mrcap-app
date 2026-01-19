@@ -1,9 +1,26 @@
 import type { ApiError } from "@/types/api";
 
+function isLocalHost(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
 function resolveDefaultApiBase() {
   const envBase = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (envBase) {
-    return envBase;
+    if (typeof window !== "undefined") {
+      try {
+        const envUrl = new URL(envBase);
+        const envIsLocal = isLocalHost(envUrl.hostname);
+        const currentIsLocal = isLocalHost(window.location.hostname);
+        if (!envIsLocal || currentIsLocal) {
+          return envBase;
+        }
+      } catch {
+        return envBase;
+      }
+    } else {
+      return envBase;
+    }
   }
   if (typeof window !== "undefined") {
     const { protocol, hostname } = window.location;
