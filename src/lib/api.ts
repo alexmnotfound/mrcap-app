@@ -1,7 +1,22 @@
 import type { ApiError } from "@/types/api";
 
-const DEFAULT_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+function resolveDefaultApiBase() {
+  const envBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (envBase) {
+    return envBase;
+  }
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
+    if (hostname.startsWith("app.")) {
+      return `${protocol}//${hostname.replace(/^app\./, "api.")}`;
+    }
+    return `${protocol}//${hostname}`;
+  }
+  return "http://localhost:8000";
+}
 
 type FetchOptions = RequestInit & {
   token?: string | null;
@@ -17,7 +32,7 @@ export async function apiFetch<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const { token, baseUrl, headers, rateLimitMessage, ...rest } = options;
-  const url = `${baseUrl ?? DEFAULT_BASE}${path}`;
+  const url = `${baseUrl ?? resolveDefaultApiBase()}${path}`;
   
   let response: Response;
   try {
@@ -128,6 +143,6 @@ export async function apiFetch<T>(
 }
 
 export function getDefaultApiBase() {
-  return DEFAULT_BASE;
+  return resolveDefaultApiBase();
 }
 

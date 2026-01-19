@@ -47,6 +47,21 @@ type PersistedState = {
   apiBase: string;
 };
 
+function resolvePersistedApiBase(persistedBase: string) {
+  if (typeof window === "undefined") {
+    return persistedBase;
+  }
+  try {
+    const persistedUrl = new URL(persistedBase);
+    if (persistedUrl.hostname !== window.location.hostname) {
+      return getDefaultApiBase();
+    }
+  } catch {
+    return getDefaultApiBase();
+  }
+  return persistedBase;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [apiBase, setApiBase] = useState<string>(getDefaultApiBase());
@@ -72,15 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       setError(null);
+      const resolvedBase = resolvePersistedApiBase(persisted.apiBase);
       setToken(persisted.token);
-      setApiBase(persisted.apiBase);
+      setApiBase(resolvedBase);
       
       // Try to get user profile
       let me: AppUser;
       try {
         me = await apiFetch<AppUser>("/api/users/me", {
           token: persisted.token ?? undefined,
-          baseUrl: persisted.apiBase,
+          baseUrl: resolvedBase,
         });
       } catch (err: any) {
         // If user not found, try to create them via signup endpoint
@@ -88,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             me = await apiFetch<AppUser>("/api/users/signup", {
               token: persisted.token ?? undefined,
-              baseUrl: persisted.apiBase,
+              baseUrl: resolvedBase,
               method: "POST",
             });
           } catch (signupErr: any) {
@@ -96,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (signupErr.message?.includes("already exists")) {
               me = await apiFetch<AppUser>("/api/users/me", {
                 token: persisted.token ?? undefined,
-                baseUrl: persisted.apiBase,
+                baseUrl: resolvedBase,
               });
             } else {
               throw signupErr;
@@ -112,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         myAccounts = await apiFetch<AccountSummary[]>("/api/accounts/me", {
           token: persisted.token ?? undefined,
-          baseUrl: persisted.apiBase,
+          baseUrl: resolvedBase,
         });
       } catch (err) {
         // Accounts endpoint might fail for new users, that's okay
@@ -121,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfile(me);
       setAccounts(myAccounts);
+      if (resolvedBase !== persisted.apiBase) {
+        persistState({ token: persisted.token ?? null, apiBase: resolvedBase });
+      }
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "No se pudo cargar el perfil");
