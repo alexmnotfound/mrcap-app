@@ -267,29 +267,18 @@ export default function DashboardPage() {
     });
   }, [sharePurchases, fundPerformance]);
 
-  // Calculate financial metrics (after sharePurchasesWithMetrics is calculated)
+  // Calculate financial metrics using backend fees (includes commissions)
   const financialMetrics = useMemo(() => {
-    // Wait for sharePurchasesWithMetrics to be calculated if we have purchases
-    // This ensures commissions are included in the calculations
-    const hasPurchases = sharePurchases.length > 0;
-    const metricsReady = !hasPurchases || sharePurchasesWithMetrics.length > 0;
-    
-    if (!metricsReady) {
-      return {
-        balance: null,
-        gains: null,
-        totalInvested: 0,
-      };
-    }
-
     let totalBalance = 0;
-    let totalInvested = 0;
+    let totalDeposits = 0;
+    let totalWithdrawals = 0;
+    let totalFees = 0;
 
     accounts.forEach((account) => {
-      // Sum net_invested for total invested
-      totalInvested += Number(account.net_invested) || 0;
+      totalDeposits += Number(account.total_deposits) || 0;
+      totalWithdrawals += Number(account.total_withdrawals) || 0;
+      totalFees += Number(account.total_fees) || 0;
 
-      // Sum market_value for all positions (balance)
       account.positions.forEach((position) => {
         if (position.market_value) {
           totalBalance += Number(position.market_value) || 0;
@@ -297,26 +286,16 @@ export default function DashboardPage() {
       });
     });
 
-    // Calculate total commissions based on purchases (if available)
-    let totalCommissions = 0;
-    if (sharePurchasesWithMetrics.length > 0) {
-      totalCommissions = sharePurchasesWithMetrics.reduce((sum, purchase) => {
-        return sum + purchase.commission;
-      }, 0);
-    }
-
-    // Net balance after commissions
-    const netBalance = totalBalance - totalCommissions;
-    const gains = totalBalance - totalInvested;
-    // Net gains after commissions
-    const netGains = gains - totalCommissions;
+    const totalInvested = totalDeposits - totalWithdrawals;
+    const netBalance = totalBalance - totalFees;
+    const gains = netBalance - totalInvested;
 
     return {
       balance: netBalance,
-      gains: netGains,
-      totalInvested: totalInvested,
+      gains,
+      totalInvested,
     };
-  }, [accounts, sharePurchasesWithMetrics, sharePurchases]);
+  }, [accounts]);
 
   // Calculate evolution per month for each purchase
   const purchaseEvolution = useMemo(() => {
