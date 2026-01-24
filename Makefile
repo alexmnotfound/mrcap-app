@@ -22,6 +22,9 @@ build: ## Build for production
 start: ## Start production server
 	npm start
 
+deploy-prod: ## Deploy the production server
+	docker compose -f docker-compose.prod.yml up -d --build
+
 lint: ## Run ESLint
 	npm run lint
 
