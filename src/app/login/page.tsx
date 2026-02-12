@@ -165,7 +165,7 @@ export default function LoginPage() {
 
             {error && (
               <p className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {error}
+                Error de inicio de sesión. Intentá nuevamente.
               </p>
             )}
           </form>
